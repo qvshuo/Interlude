@@ -30,7 +30,7 @@ jobs:
           umask 077
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
       - name: Install Android SDK
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" "build-tools;37.0.0"'
       - name: Build and check
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --no-daemon
       - name: Verify APK signature

@@ -337,3 +337,8 @@ Separately labeled emulator screenshots at default and 2x fonts showed readable 
 ### Final UI adjustment before tagging
 
 At the user's request, increased tile labels to 16sp with 24sp line height, kept Normal/Medium weights and the existing 25sp/5sp baseline padding, and raised English/lunar date opacity to 75%/60%. Sony screenshots and UI bounds (`sony-label-16.*` and `sony-label-16-row3.*`) confirmed readable resting labels and focused third-row labels without tile/label overlap; long names remain single-line ellipsized. Reran Release, all six JVM tests, all 21 TV emulator tests, and Lint successfully. Added Git text attributes to normalize source line endings while keeping Windows wrapper checkout as CRLF. This supersedes the earlier candidate digest: final pre-tag APK SHA-256 `900d639d9d83e54262ef843428675d0f1c2892800f0e56cc94ee03394811bb02`.
+
+
+### First remote release attempt: SDK manager path
+
+Run 40325571862 reached checkout, Java 27, Gradle setup, and signing-key restoration, then failed with `sdkmanager: command not found` before building any APK. GitHub's runner-image documentation confirms that command-line tools are installed under `$ANDROID_HOME/cmdline-tools/latest/bin` but not added to PATH. Updated the SDK step to invoke that installed executable directly, without adding another action or changing SDK versions. The initial assetless Release/tag created during this task is replaced with the corrected commit before republishing v1.0.0.
