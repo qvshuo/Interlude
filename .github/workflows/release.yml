@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    if: github.event.release.tag_name == 'v1.0.0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6.1.0
+        with:
+          distribution: temurin
+          java-version: '27'
+      - uses: gradle/actions/setup-gradle@v6.4.0
+      - name: Restore signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          mkdir -p ~/.android
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+      - name: Build and check
+        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --no-daemon
+      - name: Verify APK signature
+        run: '"$ANDROID_HOME/build-tools/37.0.0/apksigner" verify app/build/outputs/apk/release/app-release.apk'
+      - name: Upload APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk Interlude-1.0.0.apk
+          gh release upload "$RELEASE_TAG" Interlude-1.0.0.apk --clobber
+      - name: Remove signing key
+        if: always()
+        run: rm -f ~/.android/debug.keystore
