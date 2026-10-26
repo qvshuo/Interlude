@@ -347,3 +347,10 @@ Run 40325571862 reached checkout, Java 27, Gradle setup, and signing-key restora
 ### Second remote attempt: SDK package identifier
 
 Run 40326265204 invoked sdkmanager successfully, but Google returned no package named `platforms;android-37`. The actual stable package is `platforms;android-37.0`, matching the local `android-37.0` SDK directory and AGP's resolved boot classpath. Updated the install identifier and added an update of stable command-line tools before installing it. Application compile/target API 37, Build Tools 37.0.0, and version 1.0.0 remain unchanged. No APK was produced by either failed run.
+
+
+### CI artifact certificate gate
+
+Run 40327207020 passed its build, Lint, unit tests, and structural APK signature check. The downloaded asset matched GitHub's SHA-256 digest, but its signing certificate was `362bc4591b2fa704487c07fd5f3da912488d80140d5bb0a707444782922bd666`, which did not match Sony's installed `0d81...3b96` certificate. It was not installed and the mismatched attachment was removed. Local keytool/signingReport confirmed the existing `~/.android/debug.keystore` still contains the correct key.
+
+Made Release use an explicit sideload signing configuration pointing to that existing file, rather than inheriting the automatically managed debug configuration. The workflow now checks the restored keystore's certificate digest and requires the built APK to match the same fixed public certificate fingerprint before upload. This guards update compatibility as well as signature validity. No private signing material was printed or committed.

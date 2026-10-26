@@ -19,13 +19,21 @@ android {
     // AndroidX ships this library stripped; do not require an NDK to strip it again.
     packaging { jniLibs.keepDebugSymbols += "**/libandroidx.graphics.path.so" }
     buildFeatures { compose = true }
+    signingConfigs {
+        create("sideload") {
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // A personal sideload build; retain the same local key for subsequent upgrades.
-            signingConfig = signingConfigs.getByName("debug")
+            // Existing sideload updates must keep the same personal key.
+            signingConfig = signingConfigs.getByName("sideload")
         }
     }
     compileOptions {
