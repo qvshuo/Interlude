@@ -342,3 +342,8 @@ At the user's request, increased tile labels to 16sp with 24sp line height, kept
 ### First remote release attempt: SDK manager path
 
 Run 40325571862 reached checkout, Java 27, Gradle setup, and signing-key restoration, then failed with `sdkmanager: command not found` before building any APK. GitHub's runner-image documentation confirms that command-line tools are installed under `$ANDROID_HOME/cmdline-tools/latest/bin` but not added to PATH. Updated the SDK step to invoke that installed executable directly, without adding another action or changing SDK versions. The initial assetless Release/tag created during this task is replaced with the corrected commit before republishing v1.0.0.
+
+
+### Second remote attempt: SDK package identifier
+
+Run 40326265204 invoked sdkmanager successfully, but Google returned no package named `platforms;android-37`. The actual stable package is `platforms;android-37.0`, matching the local `android-37.0` SDK directory and AGP's resolved boot classpath. Updated the install identifier and added an update of stable command-line tools before installing it. Application compile/target API 37, Build Tools 37.0.0, and version 1.0.0 remain unchanged. No APK was produced by either failed run.
