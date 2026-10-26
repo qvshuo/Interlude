@@ -354,3 +354,17 @@ Run 40326265204 invoked sdkmanager successfully, but Google returned no package 
 Run 40327207020 passed its build, Lint, unit tests, and structural APK signature check. The downloaded asset matched GitHub's SHA-256 digest, but its signing certificate was `362bc4591b2fa704487c07fd5f3da912488d80140d5bb0a707444782922bd666`, which did not match Sony's installed `0d81...3b96` certificate. It was not installed and the mismatched attachment was removed. Local keytool/signingReport confirmed the existing `~/.android/debug.keystore` still contains the correct key.
 
 Made Release use an explicit sideload signing configuration pointing to that existing file, rather than inheriting the automatically managed debug configuration. The workflow now checks the restored keystore's certificate digest and requires the built APK to match the same fixed public certificate fingerprint before upload. This guards update compatibility as well as signature validity. No private signing material was printed or committed.
+
+
+## 2026-10-26: GitHub Release and Sony final acceptance
+
+Release workflow run 40328972399 passed from source commit `2d501e98c430c5b40bb645816cac84bb69656033`. Stable SDK installation, six JVM tests, Lint, R8/resource-shrunk Release build, restored-key fingerprint, final APK certificate verification, upload, and key cleanup all succeeded. The final `v1.0.0` tag points to that source commit. The earlier incompatible attachment was withdrawn and was never installed.
+
+Downloaded `Interlude-1.0.0.apk` from the GitHub Release. Its SHA-256 `6919cdf94f416ef284196757509750764bedad5dadd6097aee31b17d4c8f96c4` matches GitHub's asset digest. Its signer matches the existing Sony/local certificate `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`. Package/version checks confirmed `art.anjing.interlude`, versionName 1.0.0 and versionCode 4. Installed with a data-preserving update, pulled the installed base APK back, and verified its digest exactly equals the Release download.
+
+Set Interlude as Home and delivered KEYCODE_HOME on physical Sony. Verified header navigation and return, ordinary Back focus preservation, actual Lebo launch/recency, recency after force-stop/restart, real key-event hide/expand/Back/restore, and focus following restoration from the hidden section. The monitored Release process had 0 crash-log bytes. Checks used ADB key events, not exhaustive manufacturer remote hardware or power-cycle testing.
+
+After all acceptance checks, `pm clear art.anjing.interlude` returned Success. Home still resolves to and resumes Interlude. Focus/default order returned to 银河奇异果, CIBN酷喵, 云视听极光, MGTV-芒果TV. The stock `com.dangbei.TVHomeLauncher` remains enabled. No app was launched or hidden after clearing data. Sony and emulator font settings remain at default 1.0. Evidence and machine-readable verification are in `artifacts/github-release-20261026/`; the final screen is `default-home.png`. Long-duration leak, thermal, power-cycle, and physical remote hardware coverage remain outside this run.
+
+Release: https://github.com/qvshuo/Interlude/releases/tag/v1.0.0
+Workflow: https://github.com/qvshuo/Interlude/actions/runs/40328972399
