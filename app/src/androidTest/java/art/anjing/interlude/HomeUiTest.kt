@@ -1,6 +1,7 @@
 package art.anjing.interlude
 
 import android.content.Intent
+import android.os.SystemClock
 import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
@@ -178,6 +179,60 @@ class HomeUiTest {
         compose.runOnUiThread { model().recordLaunch(app.id) }
         compose.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
         compose.waitUntil(5_000) { model().state.value.apps.firstOrNull()?.id == app.id }
+    }
+
+    @Test fun rapidHomeIntentsRestoreFocusAndAmbientAfterReturningFromSettings() {
+        val apps = awaitApps().visibleApps
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        fun home() {
+            compose.runOnUiThread {
+                compose.activity.startActivity(Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_HOME).setClass(compose.activity, MainActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        }
+        home()
+        compose.waitForIdle()
+        lateinit var homeActivity: MainActivity
+        compose.runOnUiThread {
+            homeActivity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                .filterIsInstance<MainActivity>().single()
+        }
+        SystemClock.sleep(800)
+        val before = automation.takeScreenshot()
+        repeat(5) {
+            compose.onRoot().performKeyInput { pressKey(Key.DirectionRight) }
+            compose.runOnUiThread { homeActivity.startActivity(Intent(android.provider.Settings.ACTION_SETTINGS)) }
+            compose.waitUntil(5_000) { !homeActivity.hasWindowFocus() }
+            repeat(6) {
+                home()
+                SystemClock.sleep(50)
+            }
+            compose.waitUntil(5_000) { homeActivity.hasWindowFocus() }
+            compose.waitForIdle()
+            compose.appTile(apps.first().label).assertIsFocused()
+        }
+        SystemClock.sleep(800)
+        val after = automation.takeScreenshot()
+        var difference = 0L
+        var samples = 0
+        // Sample empty background below the grid, excluding clock and tile animations.
+        for (y in before.height * 9 / 10 until before.height step 8) {
+            for (x in before.width / 10 until before.width / 2 step 8) {
+                val a = before.getPixel(x, y)
+                val b = after.getPixel(x, y)
+                for (shift in listOf(0, 8, 16)) {
+                    difference += kotlin.math.abs(((a shr shift) and 255) - ((b shr shift) and 255))
+                    samples++
+                }
+            }
+        }
+        before.recycle()
+        after.recycle()
+        val meanDifference = difference.toDouble() / samples
+        android.util.Log.i("InterludeBenchmark", "Rapid Home background mean channel difference=$meanDifference")
+        assertTrue("Ambient background changed after rapid Home presses: $meanDifference", meanDifference < 1.0)
     }
 
     @Test fun inputActionOpensSystemPickerAndRestoresHeaderFocusOnBack() {

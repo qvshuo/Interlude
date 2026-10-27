@@ -30,10 +30,10 @@ internal class HomeViewModel(application: Application) : AndroidViewModel(applic
     val state = mutableState.asStateFlow()
     private var refreshJob: Job? = null
 
-    fun refresh() {
+    fun refresh(forceRefresh: Boolean = false) {
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
-            val apps = catalog.ordered(catalog.load())
+            val apps = catalog.ordered(catalog.load(forceRefresh))
             mutableState.update {
                 val hidden = catalog.hiddenIds()
                 val mode = it.showHiddenApps && apps.any { app -> app.id in hidden }

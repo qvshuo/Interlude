@@ -52,11 +52,34 @@ class PlatformTest {
 
     @Test fun unchangedRefreshReusesLoadedArtworkAndEntries() = runBlocking {
         val catalog = AppCatalog(context)
-        val first = catalog.load().associateBy { it.id }
+        val original = catalog.load()
+        val first = original.associateBy { it.id }
         val second = catalog.load()
         assertTrue(second.isNotEmpty())
         assertEquals(first.keys, second.map { it.id }.toSet())
         second.filter { first[it.id]?.artwork != null }.forEach { assertSame(first[it.id], it) }
+        if (original.all { it.artwork != null }) assertSame(original, second)
+        val forced = catalog.load(forceRefresh = true)
+        assertNotSame(second, forced)
+        assertEquals(first.keys, forced.map { it.id }.toSet())
+    }
+
+    @Test fun packageChangesWhileAwayRefreshTheCachedCatalog() = runBlocking {
+        val catalog = AppCatalog(context)
+        val fixture = "art.anjing.tigertv"
+        org.junit.Assume.assumeTrue(catalog.load().any { it.id == fixture })
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        fun shell(command: String) {
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command))
+                .bufferedReader().use { it.readText() }
+        }
+        try {
+            shell("pm disable-user --user 0 $fixture")
+            assertTrue(catalog.load().none { it.id == fixture })
+        } finally {
+            shell("pm enable --user 0 $fixture")
+        }
+        assertTrue(catalog.load().any { it.id == fixture })
     }
 
     @Test fun legacyRecordsMigrateToPackageIdentityAndUninstalledRecordsAreRemoved() = runBlocking {

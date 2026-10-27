@@ -12,8 +12,8 @@ android {
         applicationId = "art.anjing.interlude"
         minSdk = 34
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.0.0"
+        versionCode = 5
+        versionName = "1.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     // AndroidX ships this library stripped; do not require an NDK to strip it again.

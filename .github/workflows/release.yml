@@ -12,7 +12,7 @@ env:
 
 jobs:
   apk:
-    if: github.event.release.tag_name == 'v1.0.0'
+    if: github.event.release.tag_name == 'v1.0.1'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -39,18 +39,21 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;37.0.0"
       - name: Build and check
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --no-daemon
-      - name: Verify APK signature
+      - name: Verify APK signature and version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           signature=$("$ANDROID_HOME/build-tools/37.0.0/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk)
           printf '%s\n' "$signature"
           printf '%s\n' "$signature" | grep -F "certificate SHA-256 digest: $SIGNING_CERT_SHA256"
+          "$ANDROID_HOME/build-tools/37.0.0/aapt2" dump badging app/build/outputs/apk/release/app-release.apk | grep -F "versionName='${RELEASE_TAG#v}'"
       - name: Upload APK
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          cp app/build/outputs/apk/release/app-release.apk Interlude-1.0.0.apk
-          gh release upload "$RELEASE_TAG" Interlude-1.0.0.apk --clobber
+          cp app/build/outputs/apk/release/app-release.apk Interlude-1.0.1.apk
+          gh release upload "$RELEASE_TAG" Interlude-1.0.1.apk --clobber
       - name: Remove signing key
         if: always()
         run: rm -f ~/.android/debug.keystore

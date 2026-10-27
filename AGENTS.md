@@ -1,6 +1,6 @@
 # Project conventions
 
-- Keep the product at `1.0.0` until the user explicitly requests a version upgrade or commit. Preserve `versionName = "1.0.0"` and `versionCode = 4`.
+- Keep the product at `1.0.1` until the user explicitly requests a version upgrade or commit. Preserve `versionName = "1.0.1"` and `versionCode = 5`.
 - Leave the app area empty during initial loading and when all apps are hidden. Do not show loading text, empty-list messages, or placeholder headings.
 - Fail silently when an app or system entry cannot open.
 - Use native Android Toasts for hiding, restoring, and expanding or collapsing hidden apps by holding Settings. Use the same messages for the last app as for any other app.
@@ -29,11 +29,12 @@
 
 - Sign Release with the existing local debug keystore for personal sideloading. Future updates must use the same key. Never commit the key.
 - Configure GitHub Secret `ANDROID_KEYSTORE_BASE64` with Base64 of the existing `~/.android/debug.keystore` (alias `androiddebugkey`, password `android`). Reuse the key that signed installed APKs.
-- Create tag `v1.0.0` on a commit containing the workflow, then publish its GitHub Release to trigger `.github/workflows/release.yml`. After unit tests, Lint, and Release build pass, it uploads `Interlude-1.0.0.apk` to that Release.
-- The workflow responds only to publication of the `v1.0.0` Release. It does not commit, tag, bump versions, or publish a Release itself. Failed builds can be rerun.
+- Create tag `v1.0.1` on a commit containing the workflow, then publish its GitHub Release to trigger `.github/workflows/release.yml`. After unit tests, Lint, and Release build pass, it uploads `Interlude-1.0.1.apk` to that Release.
+- The workflow responds only to publication of the `v1.0.1` Release. It does not commit, tag, bump versions, or publish a Release itself. Failed builds can be rerun.
 
 ## Sources and licensing
 
 - The lightweight launcher design references [CleanYourTV launcher](https://github.com/Gathin23/cleanyourtv/tree/main/launcher), reimplemented in Kotlin and Compose for TV.
 - Inputs, Wi-Fi, Ethernet, and Settings icons originate in that project's `launcher/app/src/main/res/drawable`, under MIT License, Copyright (c) 2026 Gathin. Preserve the original notice. Interlude uses MIT License; see `LICENSE`.
+- Continuous-corner construction is adapted from [Aerial](https://github.com/pengchujin/aerial-tv) under MIT License, Copyright (c) 2026 pengchujin. Keep the combined notice in `LICENSE` and `app/src/main/assets/LICENSE.txt` identical.
 - Inter 4.1 comes from [the official Inter release](https://github.com/rsms/inter/releases/tag/v4.1). Bundle only the unmodified Light and Regular TTF files and retain the SIL Open Font License in `app/src/main/assets/INTER-LICENSE.txt`.

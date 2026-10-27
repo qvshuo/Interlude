@@ -5,11 +5,13 @@ import android.view.KeyEvent as AndroidKeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -66,6 +68,10 @@ import kotlinx.coroutines.delay
 private const val AppColumns = 5
 private val GridFadeHeight = 52.dp
 private val GridFocusInset = 10.dp
+private val FocusEasing = CubicBezierEasing(0f, 0f, 0.2f, 1f)
+
+// Match the native TV Surface scale so the light, lift, and labels settle together.
+private fun focusMotion(focused: Boolean) = tween<Float>(if (focused) 300 else 500, easing = FocusEasing)
 
 private val Ink = Color(0xFFF1F3F8)
 private val Muted = Color(0xFF9298A5)
@@ -185,13 +191,13 @@ internal fun HomeScreen(
                             style = InterTextStyle.copy(fontFeatureSettings = "tnum, case"), lineHeight = 60.sp,
                             letterSpacing = (-1.5).sp, maxLines = 1)
                         Box(Modifier.padding(horizontal = 16.dp)
-                            .width(1.dp).height(26.dp).background(Ink.copy(alpha = 0.2f)))
+                            .width(1.dp).height(26.dp).background(Ink.copy(alpha = 0.16f)))
                         Column(Modifier.weight(1f)) {
                             Text(clock.date.uppercase(Locale.ENGLISH), color = Ink.copy(alpha = 0.75f), fontSize = 14.sp,
-                                style = InterTextStyle, lineHeight = 20.sp, letterSpacing = 1.25.sp, maxLines = 1)
+                                style = InterTextStyle, lineHeight = 20.sp, letterSpacing = 1.sp, maxLines = 1)
                             Text(clock.lunar, color = Ink.copy(alpha = 0.6f), fontSize = 14.sp,
                                 style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false)),
-                                lineHeight = 20.sp, letterSpacing = 1.sp, maxLines = 1,
+                                lineHeight = 20.sp, letterSpacing = 0.5.sp, maxLines = 1,
                                 modifier = Modifier.padding(top = 4.dp))
                         }
                     }
@@ -298,11 +304,10 @@ private fun AppTile(
     onLongClick: () -> Unit,
 ) {
     var focused by remember { mutableStateOf(false) }
-    val lift by animateFloatAsState(if (focused) -3f else 0f, tween(180), label = "lift")
-    val labelColor by animateColorAsState(if (focused) Ink else Ink.copy(alpha = 0.8f), tween(150), label = "app label")
+    val emphasis = animateFloatAsState(if (focused) 1f else 0f, focusMotion(focused), label = "app emphasis")
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         FocusSurface(onClick, Modifier.fillMaxWidth().aspectRatio(16f / 9f)
-            .onFocusChanged { focused = it.isFocused }.graphicsLayer { translationY = lift.dp.toPx() }
+            .onFocusChanged { focused = it.isFocused }.graphicsLayer { translationY = (-3).dp.toPx() * emphasis.value }
             .semantics { contentDescription = "Open ${app.label}" }, onLongClick = onLongClick) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 if (app.artwork != null) Image(app.artwork.asImageBitmap(), null,
@@ -312,9 +317,9 @@ private fun AppTile(
                 else Text(app.label.take(1), color = Ink, fontSize = 36.sp, lineHeight = 44.sp)
             }
         }
-        Text(app.label, color = labelColor, fontSize = 16.sp, maxLines = 1,
+        Text(app.label, color = Ink.copy(alpha = 0.78f + 0.22f * emphasis.value), fontSize = 16.sp, maxLines = 1,
             lineHeight = 24.sp,
-            fontWeight = if (focused) FontWeight.Medium else FontWeight.Normal,
+            fontWeight = FontWeight.Normal,
             style = TextStyle(
                 platformStyle = PlatformTextStyle(includeFontPadding = false),
                 lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None),
@@ -332,19 +337,22 @@ private fun FocusSurface(
     circle: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val shape = if (circle) CircleShape else RoundedCornerShape(12.dp)
+    val shape = if (circle) CircleShape else RoundedCornerShape(16.dp)
+    val interactions = remember { MutableInteractionSource() }
+    val focused by interactions.collectIsFocusedAsState()
+    val glassFocus = animateFloatAsState(if (focused) 1f else 0f, focusMotion(focused), label = "glass")
+    val glass = remember(glassFocus, circle) { Modifier.fillMaxSize().glass(glassFocus, circle) }
     Surface(
         onClick = onClick, onLongClick = onLongClick, modifier = modifier,
+        interactionSource = interactions,
         shape = ClickableSurfaceDefaults.shape(shape),
-        colors = ClickableSurfaceDefaults.colors(containerColor = Panel, focusedContainerColor = Color(0xFF252A33)),
+        colors = ClickableSurfaceDefaults.colors(containerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent),
         scale = ClickableSurfaceDefaults.scale(focusedScale = if (circle) 1.05f else 1.1f),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.07f)), shape = shape),
-            focusedBorder = Border(
-                BorderStroke(1.dp, Color.White.copy(alpha = if (circle) 0.5f else 0.95f)),
-                shape = shape,
-            ),
+            border = Border.None, focusedBorder = Border.None,
         ),
-        content = content,
-    )
+    ) {
+        Box(glass, content = content)
+    }
 }

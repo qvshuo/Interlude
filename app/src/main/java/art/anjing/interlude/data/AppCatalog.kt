@@ -36,6 +36,8 @@ internal class AppCatalog(private val context: Context) {
     private val loadMutex = Mutex()
     private var recordsMigrated = false
     private var entryCache = emptyMap<ComponentName, Pair<Long, AppEntry>>()
+    private var cachedApps: List<AppEntry>? = null
+    private var packageSequence = 0
     private var cachedConfiguration = android.content.res.Configuration(context.resources.configuration)
 
     private fun migrateRecords() {
@@ -75,13 +77,17 @@ internal class AppCatalog(private val context: Context) {
 
     fun ordered(apps: List<AppEntry>): List<AppEntry> = AppOrder.sort(apps, AppEntry::id, AppEntry::label, launchTimes())
 
-    suspend fun load(): List<AppEntry> = withContext(Dispatchers.IO) {
+    suspend fun load(forceRefresh: Boolean = false): List<AppEntry> = withContext(Dispatchers.IO) {
         loadMutex.withLock {
             migrateRecords()
             if (cachedConfiguration != context.resources.configuration) {
                 entryCache = emptyMap()
+                cachedApps = null
                 cachedConfiguration = android.content.res.Configuration(context.resources.configuration)
             }
+            // Check before scanning so changes during the scan remain pending for the next refresh.
+            val changes = packageManager.getChangedPackages(packageSequence)
+            if (!forceRefresh && changes == null) cachedApps?.let { return@withLock it }
             val nextCache = mutableMapOf<ComponentName, Pair<Long, AppEntry>>()
             val flags = PackageManager.ResolveInfoFlags.of(0)
             val tv = packageManager.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER), flags)
@@ -127,6 +133,8 @@ internal class AppCatalog(private val context: Context) {
             coroutineContext.ensureActive()
             entryCache = nextCache
             pruneUninstalled()
+            packageSequence = changes?.sequenceNumber ?: packageSequence
+            cachedApps = apps.takeIf { entries -> entries.all { it.artwork != null } }
             apps
         }
     }

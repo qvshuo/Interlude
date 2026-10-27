@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
     private val packageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action == Intent.ACTION_PACKAGE_REMOVED && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
-            model.refresh()
+            model.refresh(forceRefresh = true)
         }
     }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                 if (!model.toggleHiddenApps()) showFeedback("No hidden apps")
                 else showFeedback(if (model.state.value.showHiddenApps) "Hidden apps shown" else "Hidden apps collapsed")
             }) { app ->
-                if (actions.openApp(app)) model.recordLaunch(app.id) else model.refresh()
+                if (actions.openApp(app)) model.recordLaunch(app.id) else model.refresh(forceRefresh = true)
             }
         }
     }
