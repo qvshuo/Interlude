@@ -20,6 +20,10 @@ android {
     // AndroidX ships this library stripped; do not require an NDK to strip it again.
     packaging { jniLibs.keepDebugSymbols += "**/libandroidx.graphics.path.so" }
     buildFeatures { compose = true }
+    lint {
+        // The required Leanback feature excludes ChromeOS; this launcher targets ARM TVs.
+        disable += "ChromeOsAbiSupport"
+    }
     signingConfigs {
         create("sideload") {
             storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
