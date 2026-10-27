@@ -14,6 +14,7 @@ android {
         targetSdk = 37
         versionCode = 5
         versionName = "1.0.1"
+        ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     // AndroidX ships this library stripped; do not require an NDK to strip it again.

@@ -17,7 +17,7 @@
 
 - Target Android 14+ with one `app` module. `data` handles the app catalog and local records, `system` wraps system entry points, and `ui` renders the interface. Activity and ViewModel coordinate lifecycle and home state. Do not introduce services, dependency injection, or a repository layer.
 - Use the latest stable toolchain and dependencies, never Alpha, Beta, RC, or snapshots. The current toolchain is Gradle 9.8.2, JDK 27, Android SDK / Build Tools 37. Gradle configuration is authoritative for dependency versions. Keep Java / JVM bytecode at 17 for Android 14 compatibility.
-- Build with `./gradlew :app:assembleRelease`. Output: `app/build/outputs/apk/release/app-release.apk`. Keep R8 and resource shrinking enabled; do not filter dependency ABIs.
+- Build with `./gradlew :app:assembleRelease`. Output: `app/build/outputs/apk/release/app-release.apk`. Keep R8 and resource shrinking enabled; package only `armeabi-v7a` and `arm64-v8a`.
 - Validate with `./gradlew :app:testDebugUnitTest :app:lintDebug`. Run device tests with `ANDROID_SERIAL=<device> ./gradlew :app:connectedDebugAndroidTest`; these require an Android TV environment with launchable apps.
 - Read app artwork on IO threads at no more than 384x216. Reuse it by component and package update time; invalidate on configuration changes. Do not retain full-resolution images or poll apps/network state.
 - Store hidden and launch records by package name in `apps` SharedPreferences, using `hidden` and `used:<package>`. Preserve migration from legacy component-name records and never reset data during updates. Keep hidden-section expansion in memory only.

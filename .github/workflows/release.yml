@@ -39,7 +39,7 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0" "build-tools;37.0.0"
       - name: Build and check
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --no-daemon
-      - name: Verify APK signature and version
+      - name: Verify APK signature, version, and ABIs
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -47,6 +47,13 @@ jobs:
           printf '%s\n' "$signature"
           printf '%s\n' "$signature" | grep -F "certificate SHA-256 digest: $SIGNING_CERT_SHA256"
           "$ANDROID_HOME/build-tools/37.0.0/aapt2" dump badging app/build/outputs/apk/release/app-release.apk | grep -F "versionName='${RELEASE_TAG#v}'"
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile("app/build/outputs/apk/release/app-release.apk") as apk:
+              abis = {name.split("/")[1] for name in apk.namelist() if name.startswith("lib/")}
+          assert abis == {"armeabi-v7a", "arm64-v8a"}, f"Unexpected ABIs: {abis}"
+          print("Packaged ABIs:", ", ".join(sorted(abis)))
+          PY
       - name: Upload APK
         env:
           GH_TOKEN: ${{ github.token }}
