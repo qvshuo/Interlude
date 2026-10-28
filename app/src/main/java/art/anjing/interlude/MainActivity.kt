@@ -54,11 +54,10 @@ class MainActivity : ComponentActivity() {
                 val app = model.state.value.apps.firstOrNull { it.id == id }
                 if (app != null && (id in model.state.value.hiddenIds) != hidden) {
                     model.setHidden(id, hidden)
-                    showFeedback("${if (hidden) "Hidden" else "Restored"}: ${app.label}")
+                    showFeedback("${if (hidden) "Removed from Home" else "Added to Home"}: ${app.label}")
                 }
             }, {
-                if (!model.toggleHiddenApps()) showFeedback("No hidden apps")
-                else showFeedback(if (model.state.value.showHiddenApps) "Hidden apps shown" else "Hidden apps collapsed")
+                if (!model.toggleHiddenApps()) showFeedback("All apps are already on Home")
             }) { app ->
                 if (actions.openApp(app)) model.recordLaunch(app.id) else model.refresh(forceRefresh = true)
             }

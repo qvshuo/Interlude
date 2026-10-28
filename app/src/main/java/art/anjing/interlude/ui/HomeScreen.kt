@@ -149,7 +149,7 @@ internal fun HomeScreen(
                     val appIndex = displayed.indexOfFirst { it.id == target }
                     if (appIndex < 0) return@LaunchedEffect
                     val index = appIndex + if (state.showHiddenApps && appIndex >= visibleApps.size) 1 else 0
-                    if (!initialFocusRequested || state.focusedId == null) grid.scrollToItem(0)
+                    if (state.pendingFocusId == null && (!initialFocusRequested || state.focusedId == null)) grid.scrollToItem(0)
                     else if (grid.layoutInfo.visibleItemsInfo.none { it.index == index }) grid.scrollToItem(index)
                     withFrameNanos { }
                     requesters.getValue(target).requestFocus()

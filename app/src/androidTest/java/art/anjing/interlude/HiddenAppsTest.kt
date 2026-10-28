@@ -39,6 +39,22 @@ class HiddenAppsTest {
         compose.waitForIdle()
     }
 
+    private fun holdWithRemote(node: SemanticsNodeInteraction) {
+        focus(node)
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val downTime = SystemClock.uptimeMillis()
+        instrumentation.sendKeySync(KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER, 0))
+        try {
+            SystemClock.sleep(ViewConfiguration.getLongPressTimeout().toLong() + 100)
+            instrumentation.sendKeySync(KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_DPAD_CENTER, 1, 0, -1, 0, KeyEvent.FLAG_LONG_PRESS))
+        } finally {
+            instrumentation.sendKeySync(KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP,
+                KeyEvent.KEYCODE_DPAD_CENTER, 0))
+        }
+        compose.waitForIdle()
+    }
+
     private fun restore(before: HomeState) {
         compose.runOnUiThread {
             before.apps.forEach { model().setHidden(it.id, it.id in before.hiddenIds) }
@@ -60,8 +76,7 @@ class HiddenAppsTest {
             compose.appTile(normal[normal.lastIndex - 1].label).assertIsFocused()
             focus(compose.onNodeWithContentDescription("Settings"))
             hold(compose.onNodeWithContentDescription("Settings"))
-            compose.onNodeWithContentDescription("Settings").assertIsFocused()
-            focus(compose.appTile(normal[0].label))
+            compose.appTile(normal[0].label).assertIsFocused()
             hold(compose.appTile(normal[0].label))
             compose.appTile(normal[0].label).assertIsFocused()
             assertFalse(normal[0].id in model().state.value.hiddenIds)
@@ -77,6 +92,7 @@ class HiddenAppsTest {
             focus(compose.onNodeWithContentDescription("Settings"))
             hold(compose.onNodeWithContentDescription("Settings"))
             assertEquals(order, model().state.value.visibleApps.map { it.id })
+            compose.appTile(hidden.label).assertIsFocused()
             val normalBounds = compose.appTile(before.visibleApps[1].label).fetchSemanticsNode().boundsInRoot
             val hiddenBounds = compose.appTile(hidden.label).fetchSemanticsNode().boundsInRoot
             assertTrue(hiddenBounds.top > normalBounds.bottom)
@@ -90,7 +106,8 @@ class HiddenAppsTest {
             hold(compose.onNodeWithContentDescription("Settings"))
             assertFalse(model().state.value.showHiddenApps)
             compose.appTile(hidden.label).assertDoesNotExist()
-            compose.onNodeWithContentDescription("Settings").assertIsFocused()
+            compose.appTile(before.visibleApps[1].label).assertIsFocused()
+            focus(compose.onNodeWithContentDescription("Settings"))
             hold(compose.onNodeWithContentDescription("Settings"))
             assertTrue(model().state.value.showHiddenApps)
         } finally { restore(before) }
@@ -99,23 +116,40 @@ class HiddenAppsTest {
     @Test fun realLongPressDoesNotLaunchNextAppOrRepeatHide() {
         val before = awaitApps()
         try {
-            val instrumentation = InstrumentationRegistry.getInstrumentation()
-            focus(compose.appTile(before.visibleApps.first().label))
-            val downTime = SystemClock.uptimeMillis()
-            instrumentation.sendKeySync(KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_CENTER, 0))
-            try {
-                SystemClock.sleep(ViewConfiguration.getLongPressTimeout().toLong() + 100)
-                instrumentation.sendKeySync(KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_DOWN,
-                    KeyEvent.KEYCODE_DPAD_CENTER, 1, 0, -1, 0, KeyEvent.FLAG_LONG_PRESS))
-            } finally {
-                instrumentation.sendKeySync(KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP,
-                    KeyEvent.KEYCODE_DPAD_CENTER, 0))
-            }
-            compose.waitForIdle()
+            holdWithRemote(compose.appTile(before.visibleApps.first().label))
             assertEquals(before.hiddenIds + before.visibleApps.first().id, model().state.value.hiddenIds)
             assertTrue(compose.activity.hasWindowFocus())
             compose.appTile(before.visibleApps[1].label).assertIsFocused()
         } finally { restore(before) }
+    }
+
+    @Test fun settingsLongPressMovesFocusWithoutLaunchingOrRemovingAnotherApp() {
+        val before = awaitApps()
+        val removed = before.apps.last()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val monitor = instrumentation.addMonitor(IntentFilter(Intent.ACTION_MAIN).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }, Instrumentation.ActivityResult(0, null), true)
+        try {
+            compose.runOnUiThread {
+                before.apps.forEach { model().setHidden(it.id, false) }
+                model().setHidden(removed.id, true)
+            }
+            compose.waitForIdle()
+            repeat(3) { index ->
+                holdWithRemote(compose.onNodeWithContentDescription("Settings"))
+                val expanded = index % 2 == 0
+                assertEquals(expanded, model().state.value.showHiddenApps)
+                val target = if (expanded) removed else model().state.value.visibleApps.first()
+                compose.appTile(target.label).assertIsFocused().assertIsDisplayed()
+                assertEquals(setOf(removed.id), model().state.value.hiddenIds)
+                assertEquals(0, monitor.hits)
+                assertTrue(compose.activity.hasWindowFocus())
+            }
+        } finally {
+            instrumentation.removeMonitor(monitor)
+            restore(before)
+        }
     }
 
     @Test fun emptyModeDoesNotOpenAndModeIsNotPersisted() {
@@ -125,6 +159,7 @@ class HiddenAppsTest {
             focus(compose.onNodeWithContentDescription("Settings"))
             hold(compose.onNodeWithContentDescription("Settings"))
             assertFalse(model().state.value.showHiddenApps)
+            compose.onNodeWithContentDescription("Settings").assertIsFocused()
             compose.runOnUiThread {
                 model().setHidden(before.apps.first().id, true)
                 model().toggleHiddenApps()
@@ -153,7 +188,13 @@ class HiddenAppsTest {
             compose.onNodeWithText("No apps on the home screen").assertDoesNotExist()
             hold(compose.onNodeWithContentDescription("Settings"))
             val first = before.apps.first()
-            focus(compose.appTile(first.label))
+            compose.appTile(first.label).assertIsFocused()
+            focus(compose.onNodeWithContentDescription("Settings"))
+            hold(compose.onNodeWithContentDescription("Settings"))
+            assertFalse(model().state.value.showHiddenApps)
+            compose.onNodeWithContentDescription("Settings").assertIsFocused()
+            hold(compose.onNodeWithContentDescription("Settings"))
+            compose.appTile(first.label).assertIsFocused()
             hold(compose.appTile(first.label))
             assertEquals(listOf(first.id), model().state.value.visibleApps.map { it.id })
             compose.appTile(first.label).assertIsFocused()

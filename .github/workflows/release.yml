@@ -12,7 +12,7 @@ env:
 
 jobs:
   apk:
-    if: github.event.release.tag_name == 'v1.0.1'
+    if: github.event.release.tag_name == 'v1.0.2'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -59,8 +59,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          cp app/build/outputs/apk/release/app-release.apk Interlude-1.0.1.apk
-          gh release upload "$RELEASE_TAG" Interlude-1.0.1.apk --clobber
+          cp app/build/outputs/apk/release/app-release.apk Interlude-1.0.2.apk
+          gh release upload "$RELEASE_TAG" Interlude-1.0.2.apk --clobber
       - name: Remove signing key
         if: always()
         run: rm -f ~/.android/debug.keystore

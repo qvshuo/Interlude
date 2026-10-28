@@ -73,15 +73,15 @@ internal class HomeViewModel(application: Application) : AndroidViewModel(applic
     fun toggleHiddenApps(): Boolean {
         if (mutableState.value.showHiddenApps) closeHiddenApps()
         else {
-            if (mutableState.value.hiddenApps.isEmpty()) return false
-            mutableState.update { it.copy(showHiddenApps = true) }
+            val target = mutableState.value.hiddenApps.firstOrNull()?.id ?: return false
+            mutableState.update { it.copy(showHiddenApps = true, pendingFocusId = target) }
         }
         return true
     }
 
     fun closeHiddenApps() {
         mutableState.update {
-            val target = it.focusedId?.takeIf { id -> id.startsWith("@") || it.visibleApps.any { app -> app.id == id } } ?: "@settings"
+            val target = it.visibleApps.firstOrNull()?.id ?: "@settings"
             it.copy(showHiddenApps = false, pendingFocusId = target)
         }
     }

@@ -1,4 +1,4 @@
-# Interlude 1.0.1 design and usage
+# Interlude 1.0.2 design and usage
 
 Interlude is a single-screen Android TV launcher for checking the time, finding apps, and opening them. It has no advertising, recommendations, accounts, news, themes, manual sorting, Dock, screensaver, or automatic launch of other apps. Most of the screen belongs to apps.
 
@@ -36,7 +36,7 @@ The launcher discovers launchable apps, preferring TV entries over ordinary entr
 
 Landscape TV banners fill the tile using proportional cropping. Square or portrait artwork declared as a banner is displayed like an ordinary icon, with padding and proportional fitting. Artwork retains its original aspect ratio when reduced to a thumbnail. Missing or unreadable artwork does not remove a launchable app: the first character of its name is used instead. Artwork is read on IO threads, limited to 384x216, reused by component and package update time, and invalidated on configuration changes.
 
-Apps opened from Interlude sort by most recent successful launch. For unused apps (or equal timestamps), package priority comes first: `com.gitvdemo.video` (银河奇异果), `com.cibn.tv` (酷喵), `com.ktcp.video` (云视听极光), then `com.hunantv.market` (芒果TV). Remaining names beginning with a Chinese character sort by Chinese pinyin collation, followed by other names in case-insensitive alphabetical order. Package identity resolves equal names deterministically. This is local launch history, not system-wide usage history. Hidden apps use the same ordering. Clock rollback and rapid launches cannot reverse recorded recency.
+Apps opened from Interlude sort by most recent successful launch. For unused apps (or equal timestamps), package priority comes first: `com.gitvdemo.video` (银河奇异果), `com.cibn.tv` (酷喵), `com.ktcp.video` (云视听极光), then `com.hunantv.market` (芒果TV). Remaining names beginning with a Chinese character sort by Chinese pinyin collation, followed by other names in case-insensitive alphabetical order. Package identity resolves equal names deterministically. This is local launch history, not system-wide usage history. Apps removed from Home use the same ordering. Clock rollback and rapid launches cannot reverse recorded recency.
 
 ## Navigation and focus
 
@@ -44,25 +44,27 @@ Use the D-pad to move focus and short-press OK to open. Initial focus goes to th
 
 The list scrolls with focus. Scrolled-out tiles fade only above the first row's original top edge. Focus follows app identity across refreshes and reordering. If an app disappears, focus moves to an available app or Settings.
 
-Home refreshes ordering and selects the first displayed app. It does not close an already expanded hidden section. Back preserves focus, scroll position, and hidden-section expansion, consumes the event without exiting, and does not manipulate Toasts. Actual Home delivery depends on the TV's default-launcher settings and must be checked with its Home key.
+Home refreshes ordering and selects the first displayed app. It does not close an already expanded hidden section. Back preserves focus, scroll position, and expansion of all apps, consumes the event without exiting, and does not manipulate Toasts. Actual Home delivery depends on the TV's default-launcher settings and must be checked with its Home key.
 
-## Hiding and restoring
+## Home apps and all apps
 
-Hold OK on a visible app to hide it immediately, without a menu or confirmation. The app remains installed. Focus moves to the next visible app, then the previous app if necessary, or Settings when none remain. Remaining repeats and key-up from that long press cannot open or hide the next app.
+Hold OK on a Home app to remove it from Home immediately, without a menu or confirmation. The app remains installed. Focus moves to the next Home app, then the previous app if necessary, or Settings when none remain. Remaining repeats and key-up from that long press cannot open or remove the next app.
 
-Hold Settings to expand or collapse hidden apps. Hidden apps begin on a new row after normal apps, even if the preceding row is incomplete. Their artwork is grayscale; their names remain readable. Short-press still opens them without restoring them. Hold OK to restore an app; focus follows it back to the normal section according to the same sorting rules. Restoring the last hidden app ends the hidden section.
+Hold Settings to show all apps and focus the first app removed from Home in the existing sort order. Removed apps begin on a new row after Home apps, even if the preceding row is incomplete. Their artwork is grayscale; their names remain readable. Short-press still opens them without adding them back to Home. Hold OK to add one back; focus follows it to its position among Home apps. Adding the last removed app ends the expanded section.
 
-With no hidden apps, holding Settings only shows a native short Toast. Expansion is temporary and resets on process restart. Back does not collapse it.
+Hold Settings again to return to Home apps and focus the first Home app, or Settings if Home is empty. Switching the displayed range is silent and does not cancel, replace, or retrigger any existing Toast. Explicit focus targets take priority over initial scrolling and transient focus events; an offscreen target is scrolled into layout before requesting focus.
 
-Project-owned action messages and spoken descriptions are English; app labels and the lunar calendar keep their original language. Toasts use `Hidden: <app>`, `Restored: <app>`, `Hidden apps shown`, `Hidden apps collapsed`, and `No hidden apps`. Header descriptions are Inputs, Network, and Settings; tiles use `Open <app>`.
+When all apps are already on Home, holding Settings preserves the view and Settings focus and shows a native short Toast. Expansion is temporary and resets on process restart. Back preserves expansion, focus, and scroll position.
 
-Hiding, restoring, expanding, and collapsing use Android's native short Toasts, dismissed by the system. A subsequent operation replaces the prior Toast; Back neither replaces nor retriggers it. The last app uses the same wording as any other app. Opening failures are silent; failed app launches refresh the catalog and do not record successful use.
+Project-owned action messages and spoken descriptions are English; app labels and the lunar calendar keep their original language. The only Toasts are `Removed from Home: <app>`, `Added to Home: <app>`, and `All apps are already on Home`. Header descriptions are Inputs, Network, and Settings; tiles use `Open <app>`.
+
+Toasts are dismissed by Android. A subsequent operation that produces a Toast replaces the prior Toast; Back and range switching do not manipulate it. The last app uses the same wording as any other app. Opening failures are silent; failed app launches refresh the catalog and do not record successful use.
 
 ## System buttons
 
 - Inputs calls only `com.android.tv.action.VIEW_INPUTS`. There is no fallback to an input configuration page.
 - Network opens system network settings, falling back to general settings when unavailable. Ethernet uses its own icon; otherwise Wi-Fi is shown. Disconnection dims the icon. There is no generated network-status text or Internet validation.
-- Settings opens system settings on short press and manages hidden-section expansion on long press.
+- Settings opens system settings on short press and manages expansion of all apps on long press.
 
 System pages belong to the TV and vary by manufacturer. Returning preserves the relevant header focus. Icon buttons and app tiles retain short spoken descriptions that tests can reuse; no extra accessibility layer is added.
 

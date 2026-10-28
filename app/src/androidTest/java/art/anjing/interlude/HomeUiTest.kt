@@ -151,6 +151,28 @@ class HomeUiTest {
         compose.onNodeWithContentDescription("Inputs").assertIsFocused()
     }
 
+    @Test fun explicitRemovedTargetBelowViewportReceivesInitialFocusAndReturnsHome() {
+        val template = awaitApps().apps.first()
+        val apps = List(22) { template.copy(id = "range-$it", label = "Range$it") }
+        val state = mutableStateOf(HomeState(apps = apps, isLoaded = true,
+            hiddenIds = setOf(apps.last().id), showHiddenApps = true, pendingFocusId = apps.last().id))
+        compose.runOnUiThread {
+            compose.activity.setContent {
+                HomeScreen(state.value, TvActions(compose.activity), null,
+                    {}, { _, _ -> }, {}, {})
+            }
+        }
+        compose.waitForIdle()
+        compose.appTile(apps.last().label).assertIsFocused().assertIsDisplayed()
+        compose.runOnUiThread {
+            state.value = state.value.copy(showHiddenApps = false,
+                focusedId = apps.last().id, pendingFocusId = apps.first().id)
+        }
+        compose.waitForIdle()
+        compose.appTile(apps.first().label).assertIsFocused().assertIsDisplayed()
+        compose.appTile(apps.last().label).assertDoesNotExist()
+    }
+
     @Test fun ordinaryBackPreservesFocusAndRepeatedVisibilityUpdatesDoNotMoveIt() {
         val apps = awaitApps().visibleApps
         compose.onRoot().performKeyInput { pressKey(Key.DirectionRight) }

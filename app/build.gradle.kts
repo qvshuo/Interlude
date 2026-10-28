@@ -12,8 +12,8 @@ android {
         applicationId = "art.anjing.interlude"
         minSdk = 34
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.0.1"
+        versionCode = 6
+        versionName = "1.0.2"
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
