@@ -461,3 +461,6 @@ Every output is a lossless LANCZOS downscale of the source pixels: no crop, colo
 
 `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease` passed: 6 JVM tests, no failures or skips; Lint reports zero issues; signed R8/resource-shrunk Release built. `aapt2 dump badging` on the Release APK reports `icon='res/E4.xml'` (the shrunken `mipmap-anydpi` adaptive icon) and `banner='res/AW.png'`, and the Debug APK retains all five density pairs. No emulator or physical-device launch check was performed for this icon-only change. The three source PNGs were deleted after generation and are not committed.
 
+Follow-up tidy keeps only artwork that is actually used. `branding/tv-banner.png` was byte-identical to `mipmap-xxxhdpi/banner.png` (same SHA-256) and was removed rather than stored twice; `android-icon.png` and `play-store-rounded-preview.png` were previews with no build, code, or documentation consumer and were removed as well. `branding/logo.png` is now a 256px transparent mark, and `play-store-icon.png` stays the single 512x512 store asset. No new directory was added: store and documentation images stay in the existing `branding/`, and app-facing bitmaps stay in `app/src/main/res/mipmap-*`. The source PNGs remain uncommitted.
+
+
