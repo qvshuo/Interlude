@@ -1,14 +1,14 @@
 # Interlude curtain identity
 
-White open curtains on black suggest a quiet interval between viewing sessions. The Android adaptive mark and TV wordmark banner share this silhouette. These assets were drawn as native vectors; no image-generation model was used. The wordmark uses outlines from the bundled, unmodified Inter 4.1 Regular font under the [SIL Open Font License](../app/src/main/assets/INTER-LICENSE.txt); it adds no font files or runtime text rendering.
+Pale open curtains on deep navy suggest a quiet interval between viewing sessions. The Android adaptive mark and TV banner share this silhouette and use only the supplied artwork, without vector redraws or added text.
 
 - `play-store-icon.png`: 512x512, opaque, sRGB, full square for upload.
 - `play-store-rounded-preview.png`: transparent outside the 30% corner mask; preview only.
-- `android-icon.png`: adaptive foreground placement on its black background; preview only, device launchers supply their masks.
-- `tv-banner.png`: 1280x720 preview of the scalable 16:9 banner.
+- `android-icon.png`: adaptive foreground placement on the banner background; preview only, device launchers supply their masks.
+- `tv-banner.png`: 1280x720 preview of the 16:9 banner.
 
-Production files: `app/src/main/res/drawable/ic_launcher.xml`, `drawable/ic_launcher_foreground.xml`, `drawable-anydpi/ic_launcher.xml`, `drawable/launcher_banner.xml`, and `values/colors.xml`.
+Production files: `app/src/main/res/mipmap-anydpi/ic_launcher.xml`, `mipmap-*/ic_launcher_foreground.png`, `mipmap-*/banner.png`, and `values/colors.xml`. The source PNGs are not stored in the repository; the packaged bitmaps are only downscaled copies, and no crop, recolour, or recompression of the artwork was applied.
 
-Design brief: pure white on black; abstract open stage curtains, no pause symbol, no gradient, no shadow; preserve the central opening and ample adaptive-icon safe area. TV banner uses the same mark plus the name Interlude.
+Design brief: the supplied mark keeps its central opening and an adaptive-icon safe area margin. The TV banner keeps its original 16:9 composition without cropping.
 
 References: [Google Play icon specifications](https://developer.android.com/distribute/google-play/resources/icon-design-specifications), [TV app icon guidelines](https://developer.android.com/design/ui/tv/guides/system/tv-app-icon-guidelines).

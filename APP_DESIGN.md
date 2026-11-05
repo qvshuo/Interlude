@@ -80,6 +80,6 @@ Interlude, the reused CleanYourTV icons, and the continuous-corner construction 
 
 ## App identity
 
-The launcher mark shows two open stage curtains surrounding a quiet central opening, referring to an interlude between viewing sessions. The identity uses pure white on black. Android uses an adaptive icon with the mark inside its safe area; the system supplies the outer mask. The 16:9 TV banner pairs the same mark with an outlined Interlude wordmark. Both use native vector resources; no additional font files are bundled.
+The launcher mark shows two open stage curtains surrounding a quiet central opening, referring to an interlude between viewing sessions. The identity uses pale curtains on deep navy. Android uses an adaptive icon with the supplied mark centered inside its safe area; the system supplies the outer mask. The 16:9 TV banner shows the same mark on its supplied background. Both come from the provided artwork as downscaled bitmaps, without cropping, recolouring, or recompression.
 
 The Play Store asset is a full-square, opaque 512x512 sRGB PNG without a baked shadow or rounded corners. Google Play applies its own corner mask (currently 30% of the icon size). A separate rounded preview illustrates that treatment and is not the upload asset.

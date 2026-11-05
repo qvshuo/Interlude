@@ -20,8 +20,8 @@
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="Interlude"
-        android:icon="@drawable/ic_launcher"
-        android:banner="@drawable/launcher_banner"
+        android:icon="@mipmap/ic_launcher"
+        android:banner="@mipmap/banner"
         android:theme="@style/Theme.Interlude"
         android:supportsRtl="true">
         <activity
