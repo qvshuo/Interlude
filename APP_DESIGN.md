@@ -80,6 +80,6 @@ Interlude, the reused CleanYourTV icons, and the continuous-corner construction 
 
 ## App identity
 
-The launcher mark shows two open stage curtains surrounding a quiet central opening, referring to an interlude between viewing sessions. The identity uses pale curtains on deep navy. Android uses an adaptive icon with the supplied mark centered inside its safe area; the system supplies the outer mask. The 16:9 TV banner shows the same mark on its supplied background. Both come from the provided artwork as downscaled bitmaps, without cropping, recolouring, or recompression.
+The launcher mark shows two open stage curtains surrounding a quiet central opening, referring to an interlude between viewing sessions. The identity uses pale curtains on deep navy. Android uses an adaptive icon with the supplied mark centered inside its safe area; the system supplies the outer mask. The 16:9 TV banner shows the same mark on its supplied background. The packaged sizes in `app/src/main/res/mipmap-*` are lossless downscales of the supplied artwork without cropping, recolouring, or recompression, and the adaptive foreground keeps the mark inside the 66dp safe circle. The transparent 256x256 `logo.png` at the repository root is the README mark only.
 
 The app is sideloaded, so no store upload asset is kept.

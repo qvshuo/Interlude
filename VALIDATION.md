@@ -463,4 +463,7 @@ Every output is a lossless LANCZOS downscale of the source pixels: no crop, colo
 
 Follow-up tidy keeps only artwork that is actually used. `branding/tv-banner.png` was byte-identical to `mipmap-xxxhdpi/banner.png` (same SHA-256) and was removed rather than stored twice; `android-icon.png` and `play-store-rounded-preview.png` were previews with no build, code, or documentation consumer and were removed as well. `branding/logo.png` is now a 256px transparent mark, and `play-store-icon.png` stays the single 512x512 store asset. No new directory was added: store and documentation images stay in the existing `branding/`, and app-facing bitmaps stay in `app/src/main/res/mipmap-*`. The source PNGs remain uncommitted.
 
+Final consolidation removes the store asset and the extra directory. The app is sideloaded only, so the dedicated 512x512 store image had no consumer; it was deleted rather than kept for a hypothetical upload. The README mark moved to `logo.png` at the repository root, and the `branding/` directory was deleted, leaving the identity notes in `APP_DESIGN.md` and no additional top-level directory. Packaged artwork is unchanged at 11 files: five foregrounds, five banners, and one adaptive-icon XML. Re-ran `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease`: 6 JVM tests with no failures, Lint with zero issues, Release built with `icon='res/E4.xml'` and `banner='res/AW.png'`. The README image path resolves to a 256x256 transparent PNG.
+
+
 
