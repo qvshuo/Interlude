@@ -5,26 +5,14 @@ import androidx.core.content.edit
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import art.anjing.interlude.data.AppCatalog
-import art.anjing.interlude.ui.clockText
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class PlatformTest {
+class AppCatalogTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
-
-    @Test fun lunarCalendarCoversNewYearAndLeapMonth() {
-        val zone = ZoneId.of("Asia/Shanghai")
-        assertEquals("丙午年正月初一", clockText(ZonedDateTime.of(2026, 2, 17, 12, 0, 0, 0, zone)).lunar)
-        assertEquals("丙午年正月初一", clockText(ZonedDateTime.of(2026, 2, 17, 0, 1, 0, 0, zone)).lunar)
-        assertEquals("乙巳年闰六月初一", clockText(ZonedDateTime.of(2025, 7, 25, 12, 0, 0, 0, zone)).lunar)
-        assertEquals("乙巳年九月十六", clockText(ZonedDateTime.of(2025, 11, 5, 12, 0, 0, 0, zone)).lunar)
-        assertEquals("TUESDAY 17 FEBRUARY", clockText(ZonedDateTime.of(2026, 2, 17, 12, 0, 0, 0, zone)).date.uppercase())
-    }
 
     @Test fun hiddenAppsAndRecentLaunchesSurviveCatalogRecreation() = runBlocking {
         val catalog = AppCatalog(context)

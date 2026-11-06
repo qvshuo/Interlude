@@ -470,3 +470,15 @@ Final consolidation removes the store asset and the extra directory. The app is 
 The user replaced the root logo.png with a 2048x2048 rounded navy icon carrying the same curtain mark plus a drop shadow. At the user's instruction the image was only downscaled, never redrawn, recoloured, or cropped: the 256x256 result matches an independent LANCZOS reference downscale with a maximum channel difference of 0, keeps the authored corner radius and alpha shadow ramp, and stays square (opaque bounds 208x211 due to the shadow offset). File size went from 739 KB to 35 KB.
 
 APP_DESIGN.md no longer calls this file a transparent mark, since the new artwork is an opaque rounded square with transparency outside it. Packaged resources under `app/src/main/res/mipmap-*` were not touched.
+
+## 2026-11-07: source and test file naming
+
+Renamed ui/Clock.kt to ClockText.kt and ui/Glass.kt to GlassModifier.kt without changing their contents. Renamed PlatformTest to AppCatalogTest, moving its existing lunar-calendar test to ClockTextTest so the catalog test name matches its scope. Moved the shared appTile test helper from HomeUiTest.kt to HomeTestHelpers.kt. Packages and runtime behavior are unchanged.
+
+`./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:assembleDebugAndroidTest` passed. Device tests were compiled but not run. Version remains 1.0.2/versionCode 6.
+
+## 2026-11-07: 1.0.3 version and Release build
+
+Prepared versionName 1.0.3/versionCode 7, including the supplied launcher artwork and source/test file naming cleanup. Updated the design heading, version constraints, and release workflow to v1.0.3 with the Interlude-1.0.3.apk attachment name.
+
+`./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:assembleDebugAndroidTest` passed: six JVM tests without failures or skips, Lint passed, signed R8/resource-shrunk Release built, and device tests compiled. No device tests or installation checks were run. APK inspection confirms Android 14 minimum, versionName 1.0.3/versionCode 7, exactly armeabi-v7a and arm64-v8a, the original signing certificate `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`, and an unchanged bundled MIT notice. Local APK SHA-256: `ca6b125767d18d6615ce4bc1cc21d8769881cdc1fd6977cca1042522bb9928e1`.

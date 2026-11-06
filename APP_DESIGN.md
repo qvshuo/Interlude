@@ -1,4 +1,4 @@
-# Interlude 1.0.2 design and usage
+# Interlude 1.0.3 design and usage
 
 Interlude is a single-screen Android TV launcher for checking the time, finding apps, and opening them. It has no advertising, recommendations, accounts, news, themes, manual sorting, Dock, screensaver, or automatic launch of other apps. Most of the screen belongs to apps.
 

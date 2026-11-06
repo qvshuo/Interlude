@@ -270,6 +270,3 @@ class HomeUiTest {
         compose.onNodeWithContentDescription("Inputs").assertIsFocused()
     }
 }
-
-internal fun SemanticsNodeInteractionsProvider.appTile(label: String): SemanticsNodeInteraction =
-    onNodeWithContentDescription("Open $label")
