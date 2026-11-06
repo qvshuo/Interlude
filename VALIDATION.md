@@ -498,3 +498,9 @@ The 40-sample warm catalog benchmark measured median 0.754459ms and P90 1.177292
 Prepared versionName 1.0.4/versionCode 8 with callback-based network indicator updates and reduced glass texture allocation. Updated the release workflow and version documentation to v1.0.4. `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease` passed. The preceding performance/stability review passed all 26 emulator tests on the same runtime changes before this version update; device tests were not repeated for the version bump.
 
 Local APK inspection confirms Android 14 minimum, exactly armeabi-v7a and arm64-v8a, the original signing certificate, and the matching bundled MIT notice. R8 and resource shrinking remain enabled. Local APK SHA-256: `18e6ff144170a212a616543387436d4742d4fb70c2d083753869f3f2887ca211`. GitHub Release build and artifact verification follow publication.
+
+## 2026-11-07: verified 1.0.4 published artifact
+
+[Release Action 42259773626](https://github.com/qvshuo/Interlude/actions/runs/42259773626) passed on tagged source commit `991fff12e36e078e64f4312f499fca2a4d6bb8e3`, including unit tests, Lint, Release build, signature/version/ABI checks, and attachment upload. Downloaded [Interlude-1.0.4.apk](https://github.com/qvshuo/Interlude/releases/tag/v1.0.4) and independently verified GitHub's digest, versionName 1.0.4/versionCode 8, Android 14 minimum, both ARM ABIs, the original signing certificate, and the bundled MIT notice. Published APK SHA-256: `9936196b01038922491fa03894a64f2fbdf99f8ecb8a4d93821362b70254f1e1`.
+
+The downloaded artifact is retained under artifacts/release-1.0.4-20261107/. No installation or hardware acceptance was performed for this published artifact. Existing release tags and attachments were not replaced. This post-release record leaves the tagged application source unchanged.
