@@ -8,6 +8,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.os.Handler
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,9 +35,10 @@ class MainActivity : ComponentActivity() {
         }
     }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
-        override fun onAvailable(network: Network) = updateNetwork()
-        override fun onLost(network: Network) = updateNetwork()
-        override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) = updateNetwork()
+        override fun onLost(network: Network) { networkCapabilities = null }
+        override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+            networkCapabilities = caps
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,8 +74,10 @@ class MainActivity : ComponentActivity() {
             addAction(Intent.ACTION_PACKAGE_CHANGED)
             addDataScheme("package")
         }, RECEIVER_EXPORTED)
-        getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(networkCallback)
-        updateNetwork()
+        val connectivity = getSystemService(ConnectivityManager::class.java)
+        networkCapabilities = connectivity.getNetworkCapabilities(connectivity.activeNetwork)
+        // Use callback snapshots on the UI thread; querying from callbacks races network changes.
+        connectivity.registerDefaultNetworkCallback(networkCallback, Handler(mainLooper))
     }
 
     override fun onResume() {
@@ -96,9 +100,5 @@ class MainActivity : ComponentActivity() {
     private fun showFeedback(message: String) {
         feedback?.cancel()
         feedback = Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT).also { it.show() }
-    }
-
-    private fun updateNetwork() {
-        runOnUiThread { networkCapabilities = actions.networkCapabilities() }
     }
 }

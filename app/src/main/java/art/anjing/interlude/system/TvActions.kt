@@ -3,8 +3,6 @@ package art.anjing.interlude.system
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.provider.Settings
 import art.anjing.interlude.data.AppEntry
 
@@ -19,11 +17,6 @@ internal class TvActions(private val activity: Activity) {
     }
 
     fun openInputs() { launch(Intent("com.android.tv.action.VIEW_INPUTS")) }
-
-    fun networkCapabilities(): NetworkCapabilities? {
-        val manager = activity.getSystemService(ConnectivityManager::class.java)
-        return manager.getNetworkCapabilities(manager.activeNetwork)
-    }
 
     private fun launch(intent: Intent): Boolean = try {
         activity.startActivity(intent)

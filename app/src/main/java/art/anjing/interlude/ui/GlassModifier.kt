@@ -1,6 +1,5 @@
 package art.anjing.interlude.ui
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
@@ -91,7 +90,7 @@ internal fun Modifier.glass(focus: State<Float>, circle: Boolean): Modifier = gr
             this.shader = shader
             strokeWidth = 2.dp.toPx()
         })
-        bitmap.copy(Bitmap.Config.ARGB_8888, false).also { bitmap.recycle() }.asImageBitmap()
+        bitmap.asImageBitmap()
     }
     // Bake antialiased paths once per size; moving focus only composites small textures.
     val mask = texture(Paint.Style.FILL)
