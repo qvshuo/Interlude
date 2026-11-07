@@ -3,3 +3,5 @@
 </p>
 
 Interlude is a minimal Android TV launcher for Android 14 and later.
+
+![Interlude running on Android TV](screenshot.png)
