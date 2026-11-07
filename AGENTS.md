@@ -1,41 +1,41 @@
-# Project conventions
+# Project contract
 
-- Keep the product at `1.0.4` until the user explicitly requests a version upgrade or commit. Preserve `versionName = "1.0.4"` and `versionCode = 8`.
-- Leave the app area empty during initial loading and when all apps are hidden. Do not show loading text, empty-list messages, or placeholder headings.
-- Fail silently when an app or system entry cannot open.
-- Use native Android Toasts for removing apps from Home, adding them back, and reporting that all apps are already on Home. Expanding or collapsing all apps is silent and moves focus to the first removed or Home app respectively, falling back to Settings when Home is empty. Use the same messages for the last app as for any other app.
-- Let Android dismiss Toasts automatically. Back preserves hidden-section expansion, focus, and scroll position; it must not cancel, replace, or retrigger Toasts.
-- Follow Occam's razor: use the smallest sufficient implementation. Do not add abstractions, state, or adaptation layers for hypothetical requirements or test conditions.
-- Use native Android sp sizes; do not override LocalDensity or font scaling. Use default system font settings for screenshot comparisons and label separate stress tests explicitly.
-- Use bundled Inter Light and Regular only for the clock and English date. App names, fallback initials, and the Chinese lunar date use the system font. Do not bundle additional font weights or scripts without a demonstrated need.
-- Use English for project documentation, identifiers, and explanatory comments. Preserve original app labels and Chinese lunar-calendar content.
-- Keep five apps per grid row. The top fade applies only to content scrolling above the first row's original top edge, never over tiles at rest.
-- Inputs calls only `com.android.tv.action.VIEW_INPUTS`; do not fall back to TV input settings.
-- Keep short, necessary spoken descriptions for icon buttons and app tiles; tests may reuse them. Do not add extra accessibility layers or spoken-only network-status logic.
+## Product
 
-## Structure and build
+- Interlude is a single-screen Android TV launcher for Android 14 and later. Keep `versionName = "1.0.4"` and `versionCode = 8` until the user requests a version upgrade.
+- Show the clock, Gregorian date, Chinese lunar date, Inputs, Network, Settings, and a five-column app grid. Keep the app area blank during initial loading and when Home has no visible apps.
+- Keep app labels below their tiles on one line with ellipsis. Fade only content scrolled above the first row's original top edge.
+- Use bundled Inter Light and Regular for the clock and English date. Use the system font for app names, fallback initials, and Chinese lunar date. Respect native `sp` scaling and system font settings.
+- Preserve original app labels and lunar-calendar content. Keep project documentation, identifiers, and explanatory comments in English.
+- Provide short spoken descriptions for icon buttons and app tiles.
 
-- Target Android 14+ with one `app` module. `data` handles the app catalog and local records, `system` wraps system entry points, and `ui` renders the interface. Activity and ViewModel coordinate lifecycle and home state. Do not introduce services, dependency injection, or a repository layer.
-- Use the latest stable toolchain and dependencies, never Alpha, Beta, RC, or snapshots. The current toolchain is Gradle 9.8.2, JDK 27, Android SDK / Build Tools 37. Gradle configuration is authoritative for dependency versions. Keep Java / JVM bytecode at 17 for Android 14 compatibility.
-- Build with `./gradlew :app:assembleRelease`. Output: `app/build/outputs/apk/release/app-release.apk`. Keep R8 and resource shrinking enabled; package only `armeabi-v7a` and `arm64-v8a`.
-- Validate with `./gradlew :app:testDebugUnitTest :app:lintDebug`. Run device tests with `ANDROID_SERIAL=<device> ./gradlew :app:connectedDebugAndroidTest`; these require an Android TV environment with launchable apps.
-- Read app artwork on IO threads at no more than 384x216. Reuse it by component and package update time; invalidate on configuration changes. Do not retain full-resolution images or poll apps/network state.
-- Store hidden and launch records by package name in `apps` SharedPreferences, using `hidden` and `used:<package>`. Preserve migration from legacy component-name records and never reset data during updates. Keep hidden-section expansion in memory only.
-- Home resets app focus; Back preserves state. Do not request INTERNET, usage-access, or accessibility permissions. Do not disable the stock launcher. Confirm the default launcher with the actual Home key on the target TV.
-- Comments must be short English explanations of necessary reasons, platform limitations, or boundaries, not restatements of code.
-- Product behavior is documented in `APP_DESIGN.md`; historical checks are in `VALIDATION.md`. This file is authoritative for technical constraints.
+## Interaction and system behavior
 
-## Release
+- Open apps on short OK. Hold OK on a Home app to remove it; hold OK on a removed app to add it back. Keep removed apps installed.
+- Use native Android Toasts with these messages: `Removed from Home: <app>`, `Added to Home: <app>`, and `All apps are already on Home`. Let Android manage their display duration.
+- Hold Settings to show all apps or return to Home apps. Keep range changes silent; focus the first removed app when expanding, and the first Home app when collapsing, falling back to Settings when Home is empty.
+- Home refreshes ordering and resets app focus without collapsing an expanded all-apps view. Back preserves focus, scroll position, and expansion.
+- Fail silently when an app or system entry cannot open. Inputs opens `com.android.tv.action.VIEW_INPUTS`; Network opens network settings with general Settings as fallback.
+- Confirm default-launcher behavior with the physical TV's Home key.
 
-- Sign Release with the existing local debug keystore for personal sideloading. Future updates must use the same key. Never commit the key.
-- Configure GitHub Secret `ANDROID_KEYSTORE_BASE64` with Base64 of the existing `~/.android/debug.keystore` (alias `androiddebugkey`, password `android`). Reuse the key that signed installed APKs.
-- Create tag `v1.0.4` on a commit containing the workflow, then publish its GitHub Release to trigger `.github/workflows/release.yml`. After unit tests, Lint, and Release build pass, it uploads `Interlude-1.0.4.apk` to that Release.
-- Release notes contain only user-facing changes and platform requirements; keep validation, hashes, signing, and acceptance details in VALIDATION.md.
-- The workflow responds only to publication of the `v1.0.4` Release. It does not commit, tag, bump versions, or publish a Release itself. Failed builds can be rerun.
+## Code and data
 
-## Sources and licensing
+- Keep one `app` module. `data` owns app discovery, ordering, artwork, and local records; `system` wraps system entry points; `ui` renders the interface. Activity and ViewModel coordinate lifecycle and home state.
+- Keep the implementation to the smallest sufficient design. Use no additional architecture layers without a demonstrated product need.
+- Store hidden package names and successful launch timestamps in `apps` SharedPreferences under `hidden` and `used:<package>`. Migrate legacy component-name records and preserve user records across updates. Keep expanded all-apps state in memory.
+- Read artwork on IO threads at no more than 384×216. Reuse by component and package update time, and invalidate on configuration changes.
+- Use app launch recency first, then the documented package priority and name ordering in `APP_DESIGN.md`. Remove records for uninstalled apps.
 
-- The lightweight launcher design references [CleanYourTV launcher](https://github.com/Gathin23/cleanyourtv/tree/main/launcher), reimplemented in Kotlin and Compose for TV.
-- Inputs, Wi-Fi, Ethernet, and Settings icons originate in that project's `launcher/app/src/main/res/drawable`, under MIT License, Copyright (c) 2026 Gathin. Preserve the original notice. Interlude uses MIT License; see `LICENSE`.
-- Continuous-corner construction is adapted from [Aerial](https://github.com/pengchujin/aerial-tv) under MIT License, Copyright (c) 2026 pengchujin. Keep the combined notice in `LICENSE` and `app/src/main/assets/LICENSE.txt` identical.
-- Inter 4.1 comes from [the official Inter release](https://github.com/rsms/inter/releases/tag/v4.1). Bundle only the unmodified Light and Regular TTF files and retain the SIL Open Font License in `app/src/main/assets/INTER-LICENSE.txt`.
+## Build and release
+
+- Use stable toolchain and dependency releases. The current toolchain is Gradle 9.8.2, JDK 27, and Android SDK / Build Tools 37. Keep Java and JVM bytecode at 17.
+- Build Release with `./gradlew :app:assembleRelease`; output is `app/build/outputs/apk/release/app-release.apk`. Keep R8 and resource shrinking enabled, targeting `armeabi-v7a` and `arm64-v8a`.
+- Validate with `./gradlew :app:testDebugUnitTest :app:lintDebug`. Device tests use `ANDROID_SERIAL=<device> ./gradlew :app:connectedDebugAndroidTest` on an Android TV environment with launchable apps.
+- Sign personal Release builds with the existing local debug keystore so updates retain the installed signing identity. Keep keystore material out of the repository.
+- The `v1.0.4` GitHub Release publication triggers `.github/workflows/release.yml`, which runs unit tests, Lint, and Release build before uploading `Interlude-1.0.4.apk`. Release notes describe user-facing changes and platform requirements; validation details belong in `VALIDATION.md`.
+
+## Documentation and licenses
+
+- `APP_DESIGN.md` describes product behavior and visual design. `VALIDATION.md` records dated checks and release evidence.
+- Preserve the MIT notices for Interlude, CleanYourTV-derived icons, and Aerial-derived continuous corners. Keep `LICENSE` and `app/src/main/assets/LICENSE.txt` identical.
+- Bundle only the unmodified Inter 4.1 Light and Regular TTF files and preserve the SIL Open Font License in `app/src/main/assets/INTER-LICENSE.txt`.
