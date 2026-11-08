@@ -1,10 +1,20 @@
 package art.anjing.interlude
 
+import android.Manifest
+import android.app.Activity
+import android.content.ComponentName
 import android.content.Context
+import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import androidx.core.content.edit
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import art.anjing.interlude.data.AppCatalog
+import art.anjing.interlude.data.preferredEntries
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
@@ -47,27 +57,28 @@ class AppCatalogTest {
         assertEquals(first.keys, second.map { it.id }.toSet())
         second.filter { first[it.id]?.artwork != null }.forEach { assertSame(first[it.id], it) }
         if (original.all { it.artwork != null }) assertSame(original, second)
-        val forced = catalog.load(forceRefresh = true)
+        catalog.invalidate()
+        val forced = catalog.load()
         assertNotSame(second, forced)
         assertEquals(first.keys, forced.map { it.id }.toSet())
     }
 
     @Test fun packageChangesWhileAwayRefreshTheCachedCatalog() = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val fixture = ComponentName(instrumentation.context, Activity::class.java)
         val catalog = AppCatalog(context)
-        val fixture = "art.anjing.tigertv"
-        org.junit.Assume.assumeTrue(catalog.load().any { it.id == fixture })
-        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
-        fun shell(command: String) {
-            android.os.ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command))
-                .bufferedReader().use { it.readText() }
-        }
+        val manager = context.packageManager
+        val previous = manager.getComponentEnabledSetting(fixture)
+        assertTrue(catalog.load().any { it.component == fixture })
+        instrumentation.uiAutomation.adoptShellPermissionIdentity(Manifest.permission.CHANGE_COMPONENT_ENABLED_STATE)
         try {
-            shell("pm disable-user --user 0 $fixture")
-            assertTrue(catalog.load().none { it.id == fixture })
+            manager.setComponentEnabledSetting(fixture, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+            assertTrue(catalog.load().none { it.id == fixture.packageName })
         } finally {
-            shell("pm enable --user 0 $fixture")
+            manager.setComponentEnabledSetting(fixture, previous, PackageManager.DONT_KILL_APP)
+            instrumentation.uiAutomation.dropShellPermissionIdentity()
         }
-        assertTrue(catalog.load().any { it.id == fixture })
+        assertTrue(catalog.load().any { it.component == fixture })
     }
 
     @Test fun legacyRecordsMigrateToPackageIdentityAndUninstalledRecordsAreRemoved() = runBlocking {
@@ -93,5 +104,33 @@ class AppCatalogTest {
             assertFalse(removed in catalog.hiddenIds())
             assertFalse(prefs.contains("used:$removed"))
         } finally { prefs.edit { clear() } }
+    }
+
+    @Test fun entrySelectionIsStableAcrossScanOrderAndPrefersTv() {
+        fun entry(pkg: String, name: String) = ResolveInfo().apply {
+            activityInfo = ActivityInfo().apply { packageName = pkg; this.name = name }
+        }
+        val tv = listOf(entry("one", "ZTv"), entry("one", "ATv"), entry("two", "OnlyTv"))
+        val launcher = listOf(entry("one", "AOrdinary"), entry("three", "ZMain"), entry("three", "AMain"))
+        fun selected(a: List<ResolveInfo>, b: List<ResolveInfo>) = preferredEntries(a, b)
+            .associate { it.activityInfo.packageName to it.activityInfo.name }
+        val expected = mapOf("one" to "ATv", "two" to "OnlyTv", "three" to "AMain")
+        assertEquals(expected, selected(tv, launcher))
+        assertEquals(expected, selected(tv.reversed(), launcher.reversed()))
+        assertEquals(expected, selected(tv.shuffled(), launcher.shuffled()))
+    }
+
+    @Test fun forcedInvalidationSurvivesCancellationBeforeRefreshStarts() = runBlocking {
+        val catalog = AppCatalog(context)
+        val original = catalog.load()
+        catalog.invalidate()
+        val cancelled = launch(start = CoroutineStart.LAZY) { catalog.load() }
+        cancelled.cancelAndJoin()
+        val refreshed = catalog.load()
+        assertNotSame(original, refreshed)
+        assertEquals(original.map { it.id }.toSet(), refreshed.map { it.id }.toSet())
+        refreshed.filter { app -> original.any { it.id == app.id && it.artwork != null } }.forEach { app ->
+            assertSame(original.first { it.id == app.id }.artwork, app.artwork)
+        }
     }
 }

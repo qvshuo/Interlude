@@ -1,4 +1,4 @@
-# Interlude 1.0.4 design and usage
+# Interlude product and visual design
 
 Interlude is a single-screen Android TV launcher for checking the time, finding apps, and opening them. It has no advertising, recommendations, accounts, news, themes, manual sorting, Dock, screensaver, or automatic launch of other apps. Most of the screen belongs to apps.
 
@@ -14,7 +14,7 @@ The background is black with white and gray text. A soft radial glow follows the
 
 App tiles use 16dp continuous corners with 0.6 smoothing. Focus scales a tile to 1.1, lifts it by 3dp, and draws a 1dp white border at 95% opacity directly along the same outline, without a gap. At rest, the glass rim catches light at the upper left and lower right, with dimmer sides. A fine 0.5dp inner shade keeps the edge readable over light banners. A restrained upper-left sheen and translucent dark substrate give tiles and header buttons a glass finish. Artwork stays sharp, and labels remain outside the glass. There is no live blur, refraction, wallpaper, or continuous shimmer. Tile names keep Normal (400) weight in both states, avoiding a change in glyph width; their opacity transitions from 78% to full white without a size change. Glass, lift, and label emphasis match the configured native TV Surface scale: 300ms on focus, 500ms on unfocus, using cubic-bezier (0, 0, 0.2, 1). Native pressed/released scaling remains under TV Surface control. Header buttons retain their circular shape, scale to 1.05, and use a 1dp white focus border at 65% opacity. Buttons are 40dp with 20dp icons and 10dp spacing.
 
-The glass finish combines [CleanYourTV](https://github.com/Gathin23/cleanyourtv/tree/main/launcher)'s restrained sheen and rim treatment with [Aerial](https://github.com/pengchujin/aerial-tv)'s continuous-corner construction. Antialiased masks and rims are rasterized once per rendered control size and held by the drawing cache; focus only changes compositing strength. Native TV surfaces still handle focus, scaling, clicks, and long presses. No glass settings, theme framework, extra dependencies, or background work are added.
+The glass finish combines [CleanYourTV](https://github.com/Gathin23/cleanyourtv/tree/main/launcher)'s restrained sheen and rim treatment with [Aerial](https://github.com/pengchujin/aerial-tv)'s continuous-corner construction. Native TV surfaces still handle focus, scaling, clicks, and long presses. No glass settings, theme framework, extra dependencies, or background work are added.
 
 The page has 48dp horizontal padding and 32dp top padding. The grid uses 18dp horizontal and vertical spacing and 10dp horizontal content padding. A 10dp focus inset and a 52dp fade region form the grid's 62dp top padding directly below the header. This leaves room for focus rendering and fading without a separate spacer. The 52dp fade mask is always present, with no scroll threshold or fade-in animation. It ends 10dp above the original first-row edge, leaving the focus inset clear so resting tiles remain fully opaque even when scaled and lifted.
 
@@ -32,9 +32,9 @@ Time and date follow the system clock and time zone. Updates run once per minute
 
 ## App discovery, artwork, and sorting
 
-The launcher discovers launchable apps, preferring TV entries over ordinary entries, deduplicating by package name, and excluding itself. On resume it checks the system's package-change sequence and reuses the catalog when apps and configuration are unchanged, while still updating local launch ordering. Package changes while visible and failed launches force a scan. Unreadable artwork is retried on the next refresh; it does not poll.
+The launcher shows one entry per launchable package, preferring TV entries over ordinary entries and excluding itself. Apps refresh on return and after package changes; a failed launch also refreshes the list.
 
-Landscape TV banners fill the tile using proportional cropping. Square or portrait artwork declared as a banner is displayed like an ordinary icon, with padding and proportional fitting. Artwork retains its original aspect ratio when reduced to a thumbnail. Missing or unreadable artwork does not remove a launchable app: the first character of its name is used instead. Artwork is read on IO threads, limited to 384x216, reused by component and package update time, and invalidated on configuration changes.
+Landscape TV banners fill the tile using proportional cropping. Square or portrait artwork declared as a banner is displayed like an ordinary icon, with padding and proportional fitting. Artwork retains its original aspect ratio when reduced to a thumbnail. Missing or unreadable artwork does not remove a launchable app: the first complete Unicode character of its name is used instead.
 
 Apps opened from Interlude sort by most recent successful launch. For unused apps (or equal timestamps), package priority comes first: `com.gitvdemo.video` (银河奇异果), `com.cibn.tv` (酷喵), `com.ktcp.video` (云视听极光), then `com.hunantv.market` (芒果TV). Remaining names beginning with a Chinese character sort by Chinese pinyin collation, followed by other names in case-insensitive alphabetical order. Package identity resolves equal names deterministically. This is local launch history, not system-wide usage history. Apps removed from Home use the same ordering. Clock rollback and rapid launches cannot reverse recorded recency.
 
@@ -68,15 +68,11 @@ Toasts are dismissed by Android. A subsequent operation that produces a Toast re
 
 System pages belong to the TV and vary by manufacturer. Returning preserves the relevant header focus. Icon buttons and app tiles retain short spoken descriptions that tests can reuse; no extra accessibility layer is added.
 
-## Persistence, lifecycle, and permissions
+## Local data and permissions
 
-`apps` SharedPreferences stores hidden package names in `hidden` and launch timestamps in `used:<package>`. Writes use asynchronous apply. Legacy component-name keys migrate to package identities; app updates do not reset records. Uninstalled packages are removed from local records. Clearing app data removes this history. There is no account sync, database, or network backup.
+Home selections and successful launch history stay on the device and survive app updates, including migration from earlier record formats. Uninstalled apps leave no local records. Clearing app data removes this history. There is no account sync, database, or network backup.
 
-The Activity handles system events and lifecycle, the ViewModel owns home state, AppCatalog owns discovery and records, and HomeScreen renders the page. Scans are serialized and cancellable; images are bounded and reused. No permanent service, app/network polling, Internet permission, usage-access permission, or accessibility permission is required. The stock launcher stays enabled.
-
-## Licensing
-
-Interlude, the reused CleanYourTV icons, and the continuous-corner construction adapted from Aerial are MIT licensed; see `LICENSE`, also bundled as `app/src/main/assets/LICENSE.txt`. The two bundled Inter 4.1 font files are licensed separately under SIL Open Font License 1.1; their full notice is packaged in `app/src/main/assets/INTER-LICENSE.txt`.
+There is no permanent service, app/network polling, Internet permission, usage-access permission, or accessibility permission. The stock launcher stays enabled. Engineering constraints, local record keys, cache rules, and license packaging are maintained in [AGENTS.md](AGENTS.md); installation and license links are in [README.md](README.md).
 
 ## App identity
 

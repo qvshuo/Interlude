@@ -3,9 +3,10 @@ package art.anjing.interlude
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import art.anjing.interlude.data.AppEntry
 import art.anjing.interlude.data.AppCatalog
+import art.anjing.interlude.data.AppEntry
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -15,7 +16,9 @@ internal data class HomeState(
     val apps: List<AppEntry> = emptyList(),
     val hiddenIds: Set<String> = emptySet(),
     val isLoaded: Boolean = false,
+    // Reported focus and explicit target have separate roles; only the UI acknowledges a target.
     val focusedId: String? = null,
+    val lastAppFocusId: String? = null,
     val homeRequest: Int = 0,
     val showHiddenApps: Boolean = false,
     val pendingFocusId: String? = null,
@@ -31,15 +34,17 @@ internal class HomeViewModel(application: Application) : AndroidViewModel(applic
     private var refreshJob: Job? = null
 
     fun refresh(forceRefresh: Boolean = false) {
+        if (forceRefresh) catalog.invalidate()
         refreshJob?.cancel()
         refreshJob = viewModelScope.launch {
-            val apps = catalog.ordered(catalog.load(forceRefresh))
+            val apps = catalog.ordered(catalog.load())
+            ensureActive()
             mutableState.update {
                 val hidden = catalog.hiddenIds()
                 val mode = it.showHiddenApps && apps.any { app -> app.id in hidden }
                 val available = apps.filter { app -> mode || app.id !in hidden }
-                val desired = it.pendingFocusId ?: it.focusedId
-                val lostFocus = desired != null && !desired.startsWith("@") && available.none { app -> app.id == desired }
+                val desired = if (it.isLoaded) it.pendingFocusId ?: it.focusedId else null
+                val lostFocus = desired == null || (!desired.startsWith("@") && available.none { app -> app.id == desired })
                 val target = if (lostFocus) available.firstOrNull()?.id ?: "@settings" else it.pendingFocusId
                 it.copy(apps = apps, hiddenIds = hidden, isLoaded = true,
                     showHiddenApps = mode, pendingFocusId = target)
@@ -49,8 +54,9 @@ internal class HomeViewModel(application: Application) : AndroidViewModel(applic
 
     fun onFocusChanged(id: String) {
         mutableState.update {
-            if (it.pendingFocusId != null && it.pendingFocusId != id) it
-            else it.copy(focusedId = id, pendingFocusId = null)
+            if (!it.isLoaded || (it.pendingFocusId != null && it.pendingFocusId != id)) it
+            else it.copy(focusedId = id, pendingFocusId = null,
+                lastAppFocusId = if (id.startsWith("@")) it.lastAppFocusId else id)
         }
     }
 
@@ -88,7 +94,10 @@ internal class HomeViewModel(application: Application) : AndroidViewModel(applic
 
     fun onHome() {
         mutableState.update {
-            it.copy(apps = catalog.ordered(it.apps), focusedId = null, pendingFocusId = null,
+            val apps = catalog.ordered(it.apps)
+            val first = apps.firstOrNull { app -> app.id !in it.hiddenIds }
+                ?: if (it.showHiddenApps) apps.firstOrNull() else null
+            it.copy(apps = apps, pendingFocusId = if (it.isLoaded) first?.id ?: "@settings" else null,
                 homeRequest = it.homeRequest + 1)
         }
     }

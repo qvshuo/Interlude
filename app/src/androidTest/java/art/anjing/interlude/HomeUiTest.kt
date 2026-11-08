@@ -52,7 +52,7 @@ class HomeUiTest {
         compose.runOnUiThread {
             compose.activity.setContent {
                 HomeScreen(
-                    state = HomeState(apps = apps, isLoaded = true),
+                    state = HomeState(apps = apps, isLoaded = true, pendingFocusId = apps.first().id),
                     actions = TvActions(compose.activity), networkCapabilities = null,
                     onFocus = {}, onHidden = { _, _ -> }, onToggleHidden = {},
                     onOpen = {},
@@ -127,7 +127,7 @@ class HomeUiTest {
         val template = awaitApps().apps.first()
         val apps = List(21) { template.copy(id = "restore-$it", label = "Restore$it") }
         val state = mutableStateOf(HomeState(apps = apps, isLoaded = true,
-            hiddenIds = setOf(apps.first().id), showHiddenApps = true))
+            hiddenIds = setOf(apps.first().id), showHiddenApps = true, pendingFocusId = apps[1].id))
         compose.runOnUiThread {
             compose.activity.setContent {
                 HomeScreen(state.value, TvActions(compose.activity), null,

@@ -10,7 +10,7 @@ import java.util.Locale
 internal data class ClockText(val time: String, val date: String, val lunar: String)
 
 internal fun clockText(now: ZonedDateTime = ZonedDateTime.now()): ClockText {
-    val lunar = ChineseCalendar(TimeZone.getTimeZone(now.zone.id)).apply { timeInMillis = now.toInstant().toEpochMilli() }
+    val lunar = ChineseCalendar(TimeZone.getTimeZone(java.util.TimeZone.getTimeZone(now.zone).id)).apply { timeInMillis = now.toInstant().toEpochMilli() }
     val months = listOf("正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "腊")
     val stems = listOf("甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸")
     val branches = listOf("子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥")

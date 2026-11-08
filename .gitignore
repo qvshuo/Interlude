@@ -11,3 +11,4 @@ hs_err_pid*
 replay_pid*
 *.keystore
 *.jks
+.DS_Store

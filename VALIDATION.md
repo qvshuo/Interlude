@@ -1,506 +1,60 @@
 # Validation record
 
-Historical entries describe the implementation and environment at the time. They are not current acceptance results. In particular, older six-column layouts, management dialogs, Back-to-collapse behavior, font-scale overrides, input-settings fallbacks, and experimental version numbers have been superseded. The current product remains 1.0.0, versionCode 4.
+This file records dated checks and their limits. Product specifications are in [APP_DESIGN.md](APP_DESIGN.md), build and test commands in [AGENTS.md](AGENTS.md), and installation/use in [README.md](README.md). Historical results apply only to the source and devices tested at the time. Superseded design descriptions and repeated engineering rules have been removed; the original detailed entries remain in Git history.
 
-## 2026-10-26: focused typography and UI simplification, 1.0.0
+## Historical evidence index
 
-Rechecked all production font declarations, line heights, baseline padding, title animation, and layout alignment. Kept the two bundled Inter weights limited to clock/date, native sp scaling, system fonts elsewhere, and standard baseline padding for mixed-script tile names. No per-language sizing, density override, custom text measurement, or additional typography layer was introduced. Existing line-height and baseline settings serve the documented layout and were retained.
-
-The title Crossfade now targets only its displayed label instead of the entire AppEntry, avoiding irrelevant transitions when artwork or component metadata changes. Removed the separator's redundant align modifier because its parent Row already centers children vertically. Sizes, spacing, font choices, navigation, and product version are unchanged.
-
-The combined offline unit/Lint/Release/device command passed in 2m 47s: 3 JVM tests and 20 API 34 TV tests, no failures or skips, zero Lint errors or warnings. Release APK SHA-256: `e3358883b04a6757da3f5d16c5df22995efbb4aff9a2283233e8fd29d638adb5`.
-
-## 2026-10-26: final pre-commit review, 1.0.0
-
-Reviewed production code, tests, resources, module boundaries, comments, persistence, lifecycle, artwork caching, UI focus/layout, and the release workflow. No additional production abstraction or confirmed production defect justified a code change. Kept versionName 1.0.0 and versionCode 4; no commit, tag, or Release was created.
-
-The workflow retains the current stable action majors: checkout v7, setup-java v6, and setup-gradle v6, checked against [setup-java](https://github.com/actions/setup-java) and [Gradle's Actions documentation](https://docs.gradle.org/current/userguide/github-actions.html). Added a 30-minute timeout, disabled checkout credential persistence, restricted restored key-file permissions, and added unconditional signing-key cleanup. YAML parsing passed. The repository initially had no Actions secrets; configured ANDROID_KEYSTORE_BASE64 from the existing local debug.keystore, as required by AGENTS.md, and confirmed the secret name exists. The workflow still runs only when the v1.0.0 Release is published and uploads only after tests, Lint, and the Release build succeed. A hosted release run was not triggered.
-
-Renamed the catalog-recreation test to match the actual architecture and extended artwork bounds verification to both width and height. `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --offline` passed (unchanged unit/build tasks reused their verified outputs); 3 JVM tests, zero Lint errors or warnings. `ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest --offline --warning-mode all` passed in 2m 29s: 20 tests, no failures or skips. Gradle's deprecation report points to com.android.internal.application calling Configuration.setVisible; protobuf Unsafe warnings originate in device-test tooling.
-
-Reinstalled Release on the API 34 TV emulator at 1920x1080, font_scale 1.0. An actual injected Home key returned to Interlude without changing the default launcher or disabling any launcher. Stable app/header focus screenshots showed no overlap, clipped focus outline, mixed fonts, or dimmed resting tiles. Five-column wrapping, third-row navigation, hidden-section boundaries, offscreen restoration, and Back preservation passed device tests. Screenshots are in `artifacts/final-polish/`; the initial Home capture and first header capture included focus-animation timing, so final visual inspection used `release-app-focus.png` and the recaptured `release-header.png` after UI idle.
-
-Crash log was empty. A single post-navigation memory sample reported 38,032 KiB total PSS; this is not a leak or sustained-performance test. Artwork remains bounded and reused, scans run on IO, and no polling or permanent service was added. Physical-TV behavior, long-run frame/memory stability, and damaged vendor resources were not tested this round.
-
-Release APK: `app/build/outputs/apk/release/app-release.apk`. SHA-256: `34d00f31df6596e4ffafd1bd0e6c7fcaf8a95576c51a5fb78d97209c68ae926f`.
-
-## 2026-10-26: system-font tile-label baselines, 1.0.0
-
-Inter remains limited to the clock (Light) and English Gregorian date (Regular). App titles, tile labels, missing-artwork initials, and lunar text retain the system font.
-
-The prior default-font UI tree showed a 37px Chinese label box and 30px Latin boxes. Top padding alone did not align their different font metrics. Tile labels now use standard Compose paddingFromBaseline (25sp above / 5sp below), includeFontPadding=false, an 18sp line height, centered line-height distribution, and no trimming. There is no language detection, per-language offset, custom font family, or density override. Glyph ink heights naturally differ; layout is aligned by baseline rather than forced glyph dimensions.
-
-Unit tests, Lint, and Release build passed. Installed the final Release and inspected Chinese/English labels at font_scale 1.0 and separately at 2.0; text remained legible without clipping and long labels ellipsized. Restored 1.0 afterward. No device test suite was rerun for this local text-layout change. Screenshots: `artifacts/inter-20261026/40-system-label-baselines.png` and `41-system-label-baselines-font-2-stress.png`; UI tree: `label-baselines.xml`. Version remains 1.0.0, code 4.
-
-## 2026-10-26: English project text and Inter typography, 1.0.0
-
-Translated project documentation and remaining explanatory comments into English. Project-owned Toasts and spoken descriptions are English; Chinese lunar-calendar strings and Chinese collation fixtures remain intentional content. Original installed-app labels are unchanged. Historical results, limitations, artifact names, hashes, and experimental versions below remain historical.
-
-Bundled only official Inter 4.1 Light and Regular TTFs for the clock and English date. Both fonts and the packaged SIL OFL notice match the official release archive byte-for-byte. No italic/variable/script fonts, runtime font downloads, dependencies, or permissions were added. App titles, tile labels, fallback initials, and lunar text have no explicit font family and use Android's system font. Release grew from 1,734,428 to 2,100,198 bytes: +365,770 bytes (about 357 KiB); versionName 1.0.0 and versionCode 4 are unchanged.
-
-Removed manual colon BaselineShift in favor of Inter's OpenType `tnum, case` features. Used standard text font-padding settings and explicit line heights: clock 64sp, dates 20sp, large app title 54sp, labels 18sp, fallback initials 44sp. Centered the date group directly against the clock, removing the old 9dp bottom offset. Preserved 15dp separator margins, 4dp date-line gap, 1.5sp/1.15sp tracking, and 70%/55% date opacity. Increased grid side padding from 8dp to 10dp so 1.1x focus and its 1dp border have room at both edges; five columns, 18dp gaps, 3dp lift, shared tile/border shape, 10dp top focus inset, and fade boundary remain intact.
-
-The complete unit/Lint/Release/device command passed in 2m 34s: 3 JVM tests and 20 Android 14 TV emulator tests, no failures/skips; Lint zero errors/warnings. After the final side-padding adjustment, repeated unit/Lint/Release and the five-column/third-row device test; one selected device test ran and passed. No new test-only production logic or typography tests were added.
-
-Installed the final Release on the 1920x1080, 320dpi API 34 TV emulator. Inspected default-font screenshots of Chinese and English app names, clock colon, date-line alignment, text line heights, tile-label spacing, and left/right focus edges; no overlap or clipping was observed. A separate font_scale=2.0 stress screenshot kept the five-column layout, preserved focus outlines, and ellipsized long labels. Restored the original 1.0 font scale and Home focus afterward. These emulator observations do not claim new Sony hardware, power-cycle, or long-run validation.
-
-Screenshots: `artifacts/inter-20261026/37-inter-default.png`, `38-inter-english-right-edge.png`, and `39-inter-font-2-stress.png`. UI trees: `default.xml` and `font-2.xml` in the same directory. Standard APK and test/Lint report paths remain unchanged.
-
-## 2026-10-26: stable toolchain and pre-commit review, 1.0.0
-
-Reviewed production code, tests, resources, Manifest, build configuration, and documentation. Retained one app module and the data/system/ui responsibilities. Simplified local branches, imports, and formatting without adding architecture or product state. Kept README to a title and one sentence; technical constraints live in AGENTS.md. Added the original MIT icon notice and key-file ignore rules.
-
-Official Google Maven and Maven Central metadata, [Kotlin releases](https://kotlinlang.org/docs/releases.html), and [Gradle stable-version metadata](https://services.gradle.org/versions/current) were checked at that time: Kotlin 2.4.21, AGP 9.4.1, Compose BOM 2026.09.00, Activity 1.13.0, TV Material 1.1.0, Lifecycle 2.11.0, Coroutines 1.11.0, JUnit 4.13.2, AndroidX Test Runner 1.7.0, and AndroidX Test JUnit 1.3.0 were stable. Gradle moved from 9.6.0 to 9.8.2; Wrapper files were regenerated with the official SHA-256. Build Tools 37.0.0 and JDK 27 are shared by CI and local builds. SDK 37, minimum SDK 34, JVM 17, versionName 1.0.0, and versionCode 4 were retained.
-
-Removed unnecessary ARM ABI filters. All four dependency ABIs are packaged, adding about 20 KB and removing the ChromeOS ABI warning. All four prebuilt libandroidx.graphics.path.so binaries are already stripped; duplicate stripping is skipped without introducing an NDK. Final Lint: zero errors and zero warnings.
-
-Added the minimal release.yml workflow: publication of the v1.0.0 GitHub Release restores ANDROID_KEYSTORE_BASE64, installs the SDK, runs unit tests/Lint/Release, and uploads Interlude-1.0.0.apk. YAML and shell checks passed. It has not been run on GitHub; the signing Secret must be configured before release. No commit, tag, or Release was created.
-
-Upstream warnings remain visible: AGP 9.4.1 BasePlugin.createAndroidJdkImageConfiguration uses deprecated Gradle Configuration.setVisible; device tooling's protobuf-java 3.25.5 uses sun.misc.Unsafe on JDK 27; standalone apksigner/Conscrypt reports native access. No global suppression, internal dependency replacement, or prerelease workaround was introduced.
-
-Results: 3 JVM tests, Lint, Release, and APK signature verification passed. All 20 Android 14 TV emulator tests passed, with no failures or skips. The native stripping task was rerun to confirm the duplicate-stripping warning was gone.
-
-## 2026-10-26: single Inputs action, descriptions, and naming, 1.0.0
-
-Inputs now calls only `com.android.tv.action.VIEW_INPUTS`; removed the settings fallback and its Manifest query. Retained short button and tile descriptions for speech and test reuse, without production test tags or an extra accessibility layer. Removed generated network-status strings and Internet validation; NetworkCapabilities directly determines Ethernet and disconnected appearance.
-
-An attempt to remove all descriptions and locate nodes by structure caused sibling-match ambiguity and ordering differences in the first device run. The user then explicitly allowed necessary spoken descriptions, so tests returned to precise description-based matching.
-
-| Previous name | Current name | Reason |
+| Date | Scope and result | Evidence and limits |
 | --- | --- | --- |
-| HomeModel.kt / HomeModel | HomeViewModel.kt / HomeViewModel | Android ViewModel lifecycle role |
-| data/Apps.kt / Apps | data/AppCatalog.kt / AppCatalog | Catalog, artwork, and local records |
-| repository | catalog | No implied repository layer |
-| hidden collection | hiddenIds | Identity set |
-| visible / concealed lists | visibleApps / hiddenApps | Element type and consistent terminology |
-| ready / hiddenMode | isLoaded / showHiddenApps | Distinct Boolean meanings |
-| focus / focusTarget | focusedId / pendingFocusId | Current versus requested focus |
-| hide / opened / home / focus methods | setHidden / recordLaunch / onHome / onFocusChanged | Explicit operation and event names |
-| TvActions.open / settings / network / inputs | openApp / openSettings / openNetworkSettings / openInputs | Explicit system actions |
-| HeaderIcon | HeaderButton | Interactive control |
-| AppEntry.banner / accent | isBanner / accentColor | Boolean and color |
-| pm / prefs / cache / configuration / used | packageManager / preferences / entryCache / cachedConfiguration / launchTimes | Object and record roles |
-| drawable/icon.xml / banner.xml | ic_launcher.xml / launcher_banner.xml | Launcher resources |
-| duplicateLabelsUseStableComponentIdentity | duplicateLabelsUseStablePackageIdentity | Actual ordering identity |
-
-Kept standard Android java/androidTest/res/Gradle/Manifest layout and existing MainActivity, HomeState, AppEntry, AppOrder, Clock, HomeScreen, and test classes. Ordinary local indices and color channels were not expanded unnecessarily. Package art.anjing.interlude, preferences apps, and hidden/used: keys did not change; no data reset or migration was caused by renaming.
-
-Full command: `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:connectedDebugAndroidTest --offline`. BUILD SUCCESSFUL in 2m 24s: 3 JVM and 20 emulator tests passed; Lint had zero errors and two then-existing warnings; Release passed. Product documentation was uploaded and checksummed.
-
-## 2026-10-26: loading and launch-failure messages removed, 1.0.0
-
-Removed the unavailable-function Toast and all callers. System-entry failures are silent. Failed app launches still refresh the list; only successful launches record recency. Removed loading text and its empty container; the initial app area is blank.
-
-At this historical point, documentation described VIEW_INPUTS followed by TV_INPUT_SETTINGS and a spoken-only no-Internet suffix. Both were removed in the later single-action review above. Hidden/launch records remained in apps SharedPreferences, using package identities and asynchronous apply.
-
-The full offline unit/Lint/Release/device command passed: 3 JVM and 20 emulator tests, zero Lint errors and two existing warnings. Version stayed 1.0.0. APP_DESIGN.md was uploaded and checksummed.
-
-## 2026-10-26: Back independent of hidden-section expansion, 1.0.0
-
-Back now preserves expansion, focus, and scroll and does not touch Toasts. Holding Settings still expands/collapses; restoring the last hidden app ends the section; process restart closes it. Removed HomeScreen's collapse callback and Activity forwarding; retained an empty consuming BackHandler. Tests now verify that Back leaves a hidden tile focused and the section expanded, then verify Settings can collapse and reopen it.
-
-The full offline command passed: 3 JVM and 20 emulator tests, zero Lint errors and two existing warnings, Release successful. Version stayed 1.0.0. Documentation was uploaded to the Interlude directory and checksummed. Older Back-collapse entries below are historical.
-
-## 2026-10-26: minimal implementation review, 1.0.0
-
-Read all seven production Kotlin files, four test files, Manifest, XML resources, Gradle files, and project documents. Existing uncommitted work was retained; no commit was made. Version remained 1.0.0, code 4. No confirmed severe functional gap, duplicated page, or need for additional layers was found.
-
-| Severity | Finding | Resolution |
-| --- | --- | --- |
-| Medium | RuntimeException around all of Apps.load entry construction could turn programming errors into missing apps | Removed the broad outer catch and cancellation rethrow needed only by it; retained uninstall races, permission, vendor-label, and artwork boundaries; added logs for label/permission failure |
-| Medium, coverage gap | Existing tests did not explicitly cover five-column section boundaries, first-row navigation with all apps hidden, or offscreen restoration | Added normal counts 0/1/5/6 and a 21-app D-pad restoration case |
-| Low | A nullable app list represented a separator and required mixed item callbacks | Emit normal section, full-span separator, and hidden section directly, reusing the same tile |
-| Low | Every confirm event allocated a set; app changes copied requester maps | Use when for keys and reuse/clean the existing requester map |
-
-Reviewed discovery, package deduplication, local recency, equal-label ordering, clock rollback, hidden grayscale tiles, short-press launch, focus migration, Home/Back, state ownership, long-press repeat/up consumption, lifecycle callbacks, cancellable IO scans, bounded/reused artwork, legacy record migration, and uninstall cleanup. Kept one state owner and no DI/repository/service/compatibility layer. AppOrder, TvActions, and FocusSurface each retain real shared responsibilities; no class was split merely to shorten files.
-
-The first exception-boundary batch passed 3 JVM and 18 device tests, Lint, and Release. An early offscreen test incorrectly requested an offscreen initial focus and failed; it was changed to navigate through the real D-pad path. Same-frame key injection also failed to reach the intended target, so the test now waits for layout between keys. No production branch was added for test conditions.
-
-Final offline command passed in 2m 22s: 3 JVM and 20 Android 14 TV tests (6 hidden, 9 home, 5 platform), no failures/skips. Lint: zero errors, two existing warnings (Gradle upgrade and ChromeOS x86_64 ABI). R8/resource-shrunk Release passed and was reinstalled.
-
-Release checks at 1920x1080, 320dpi, font scale 1.0 found no overlap or focus clipping. NetworkActivity and MainSettings opened via D-pad; Back restored the appropriate header focus. Screenshots: `artifacts/minimal-review/release-home.png`, `release-network-return.png`, `release-settings-return.png`.
-
-Reports: `app/build/reports/androidTests/connected/debug/index.html`, `app/build/reports/lint-results-debug.html`. APK: `app/build/outputs/apk/release/app-release.apk`. Protobuf Unsafe warnings came from test tooling.
-
-No Sony was online. Physical remote-specific keys, vendor-page returns, power cycles, long-run memory/frame time, and damaged vendor-resource injection were not validated. Historical screenshots and short samples were not treated as acceptance of these cases.
-
-## 2026-10-26: unnecessary font-scale overrides removed, 1.0.0
-
-Mixed default/2x screenshots reflected different test settings, not language-dependent product sizing. Removed fixedTypography and the two Density/fontScale CompositionLocalProviders introduced to compensate. Text keeps native 52sp/14sp/42sp sizing and follows Android preferences. Added the minimal-implementation and default-font-comparison rules to AGENTS.md. Five columns, fade, behavior, and version remained unchanged. Earlier large-font screenshots are historical stress tests. Release, Lint, and 3 JVM tests passed, without new warnings.
-
-## 2026-10-26: five columns, title, and top fade, 1.0.0
-
-Screenshot 20 used 2x fonts; 21 used default fonts. At this historical stage the title was temporarily fixed at 42sp Light with fixed density; both language bounds matched between scales: Chinese `[92,233][603,354]`, English `[92,244][423,343]`. Glyph metrics differ naturally; there were no language-specific sizes. These font overrides were subsequently removed.
-
-Changed to five columns and reused that count for first-row up navigation. Hidden apps still start a separate row. Added a 32dp scroll extension in the gap below the title without moving the resting first row; fade ends at its original edge. At 1080p the original top and fade endpoint were both y=429px, with 64px above for fading. Screenshot 26 shows rest; 27 shows third-row Play Store focus with scrolled content fading.
-
-Added five-column wrapping and third-row D-pad tests: 3 JVM and 18 device tests passed, Release passed, Lint zero errors/two existing warnings. Screenshots 22/23 compare default Chinese/English titles, 24/25 compare 2x, 26/27 compare rest/scroll. Temporary apps were uninstalled and font settings restored; version stayed 1.0.0.
-
-## 2026-10-26: date proportions and multirow screenshots, 1.0.0
-
-Earlier screenshot 19 at 2x had disproportionate dates; calling it correct was inaccurate. A temporary local fontScale=1 Density fixed header text while preserving density and app-name scaling. Default and 2x date bounds matched: English `[398,78][737,111]`, lunar `[398,119][612,159]`; screenshot `20-header-font-2-fixed.png`. This override was later removed.
-
-Installed eight temporary entries alongside five existing apps for 13 apps. D-pad selected third-row YouTube with bounds `[108,829][362,972]`; screenshot `21-third-row-top-fade.png`. Existing opacity fading was used, not a new blur. Release, Lint, and 3 JVM tests passed; Lint zero errors/two existing warnings. Did not repeat the prior 17 device tests. Restored settings and uninstalled temporary apps; version stayed 1.0.0.
-
-## 2026-10-26: Toasts and header buttons, 1.0.0
-
-Hide/restore wording was unified for all apps, including the last. At this stage Back collapsed hidden apps without calling the Toast helper; Settings expansion/collapse still displayed native Toasts. Back behavior was subsequently changed to preserve expansion.
-
-Reduced buttons from 48dp to 40dp and icons from 22dp to 20dp; removed the button-row bottom offset and centered it against the clock. The large app title is a project design choice, not claimed as a tvOS 27 requirement.
-
-Release, 3 JVM, and 17 device tests passed; Lint zero errors/two existing warnings. Added screenshots 15/18/19 for default fonts, large fonts, and expired Toasts. Emulator PNG capture takes about two seconds, so sequential screenshots cannot prove a short Toast remains at the exact key instant; callback paths were reviewed.
-
-## 2026-10-26: blank app area and native Toasts, 1.0.0
-
-Fixed the product at 1.0.0 while retaining versionCode for update compatibility. All-hidden state removed empty-home text/headings, leaving the header usable. At this stage hide/restore/expand/collapse, including Back collapse, used native Toasts; later Back behavior supersedes this.
-
-Release, 3 JVM, and 17 TV tests passed; Lint zero errors/two existing warnings. Screenshots under `artifacts/Interlude-1.0.0-review-20261026/` covered home, Toasts, grayscale hidden apps, blank all-hidden state, and restoration. Restored all apps afterward. Uploaded 16 screenshots and README.md via SCP to copyparty `Files/Interlude/`; all SHA-256 values matched. Anonymous web access required login with the existing account.
-
-## 2026-10-26: full review and refactor
-
-Reviewed seven production files, Manifest, resources, build, and tests. The then-current single page had six columns, recency, long-press hide/restore, and temporary hidden-section expansion. No Java, obsolete management page, or duplicate app list remained.
-
-Moved initial preferences reads and normalization to background scanning; serialized/cancelled scans; reused entries/artwork by component/update/configuration; evicted absent entries. Artwork failure no longer removes launchable apps; missing names fall back to package names; failed images can retry. Serialized hidden-set read/modify/write against uninstall cleanup while querying PackageManager outside the lock. No-op hidden updates return without writes or focus moves; usage-record reading became private.
-
-Reused surviving FocusRequesters; removed an unused UI Home callback. Ordinary Back retained focus and expanded Back then collapsed the hidden section; Home selected the first app. Used an independent composition layer for fading and reserved focus margins. Icons fit tile space and dates used remaining width. Long-press tests inject down/repeat/up with key-up in finally. Removed irrelevant Java/BlueJ/J2ME and duplicate gitignore rules.
-
-Retained Activity lifecycle/events, HomeModel state, Apps discovery/thumbnails/persistence, and HomeScreen rendering/focus. No added dependencies, pages, or generic architecture. Component-to-package normalization preserves installed data and is not a second product implementation.
-
-The full offline command passed: 3 JVM and 17 API 34 TV tests (6 hidden, 6 home, 5 platform), Release with R8/resource shrinking, Lint zero errors/two existing warnings. Default and 2x Release screenshots showed no overlap/clipping; long names ellipsized; original font settings were restored. Screenshots: `artifacts/review/default.png`, `artifacts/review/font-2.png`. Reports and APK use the standard build paths above. Tooling reported protobuf Unsafe deprecation.
-
-Open coverage then included physical Sony remote events/Home, vendor pages, one/many apps, rapid scrolling, edge columns/fade, 720p/4K/non-16:9 and font combinations, install/update/component changes/uninstall/disable/re-enable, vendor visibility, process/power/time-zone changes, long-run memory/frame time, and damaged vendor APK injection. Earlier Sony results were not current-code acceptance.
-
-## 2026-10-26: long-press hide/restore, historical 1.2.0
-
-Reused six-column tiles and removed the management dialog. Long-press normal/hidden apps hides/restores; Settings toggles expansion; Back then collapsed it. A nonfocusable full-span separator starts the grayscale hidden section. Names are unchanged. Records use package identities with migration; changed launcher activities preserve identity; removed packages are cleaned; expansion is in-memory only.
-
-Results: 3 unit tests; 9 basic device checks including record migration/cleanup; 6 hidden-interaction tests run in groups. Real confirm-key tests monitored launch intents; Release opened `art.anjing.tigertv/.MainActivity` without restoring hidden state. Color/grayscale, focus following restoration, update persistence, closed section after process restart, and consumed repeats/up after long-press removal all passed. Key bookkeeping did not recompose the clickable surface. Lint zero errors/two existing warnings; Release/signature passed with ARMv7 and ARM64. Temporary hidden apps were restored; Sony was offline.
-
-APK: `artifacts/Interlude-1.2.0-universal-20261026.apk`, 1,648,845 bytes. SHA-256: `aa7abf2a02b07b245c8b663e65c9a42f9512079deda61350fd8f55493aa5575c`.
-
-Screenshots: `artifacts/hidden-apps/expanded-stable.png`, `artifacts/hidden-apps/restored.png`.
-
-## 2026-10-26: greeting removed
-
-Removed the home greeting, ClockText.greeting, time-of-day logic/tests, and layout placeholder. README was updated. Release, device-test compilation, and Lint passed (zero errors/two existing warnings). Installed Release on API 34 TV; screenshot/UI tree confirmed the greeting was gone and clock/dates/buttons rendered. Did not rerun device tests or operate Sony. Screenshot: `artifacts/emulator-no-greeting.png`.
-
-## 2026-10-26: typography and interaction, historical 1.1.0
-
-Environment: Television_1080p, 1920x1080, ARM64, API 34, installed Release. Passed 3 JVM and 9 Android tests, R8 Release, and v2 signature with the existing debug key. Lint zero errors/two existing warnings. Checked the small greeting, 52sp clock, separator, uppercase date, sexagenary lunar date, circular buttons, focus ring, Ethernet/Wi-Fi icon selection, native-switch app management dialog, six-column grid/fade, new package art.anjing.interlude, Home resolution, and empty crash log. Removed app count. Lunar tests covered 2026-02-17 lunar new year and 2025-07-25 leap month; greeting boundaries covered 05:00, 11:00, 12:59, 13:00, and 18:00.
-
-APK: `artifacts/Interlude-1.1.0-universal-20261026.apk`, 1,726,537 bytes. SHA-256: `4683612bb19159c0948f050c5b7e6494ba81fe762e7f235e60bb4830e509bbe7`.
-
-The package rename from dev.anjing.interlude had no data migration: preferences remained package-specific. Assigned the new Home role before uninstalling the old emulator package. Device tests uninstall the target, so Release and Home role were restored afterward. Sony at 192.168.5.75 was offline and retained the old package pending a later update.
-
-## 2026-10-26: historical 1.0.1
-
-Same 1080p ARM64 API 34 TV environment. Passed 3 JVM and 7 Android tests, R8 Release, v2 signature, six-column grid, header focus/Back, management-list first/last focus clipping, greeting/clock/date/app-name typography, and hide/show messages. Removed bottom-right help text. Eight temporary entries made 13 apps/three rows; reaching row three demonstrated top fading. Temporarily enabling com.google.android.tvlauncher allowed InputsPanelActivity and restored Inputs focus on Back. Input crash was not reproduced; crash log was empty. Lint zero errors/two existing warnings.
-
-APK: `artifacts/Interlude-1.0.1-universal-20261026.apk`, 1,681,141 bytes. SHA-256: `816cb8f6366cac05257f34313f059edd0f86987355786372bfda67897ce9f017`.
-
-Sony was not updated in this run. Package queries confirmed VIEW_INPUTS resolves to `com.android.systemui/com.sony.dtv.systemui.quicklauncher.LaunchActivity`, the same picker as the remote Inputs key.
-
-## 2026-10-25: Android 14 TV emulator
-
-Environment: Television_1080p, 1920x1080, ARM64, API 34. Passed 3 JVM and 7 Android tests, R8 Release, v2 signature, ARMv7/ARM64 packaging, initial/D-pad/Home focus, real Settings long press, system-settings panel return, recency refresh, and all-hidden Settings access. Lint had no errors and the then-expected Gradle/ChromeOS ABI warnings.
-
-The emulator stock launcher com.google.android.tvlauncher had higher HOME priority even after role assignment. Disabling it made actual Home enter Interlude. This was emulator-specific; it is not authorization to disable a physical TV's stock launcher. Historical restore commands:
-
-```sh
-adb -s emulator-5554 shell pm enable --user 0 com.google.android.tvlauncher
-adb -s emulator-5554 shell cmd package set-home-activity com.google.android.tvlauncher/.MainActivity
-```
-
-Artifacts are local and ignored by Git. Screenshot dates follow emulator time; lunar correctness was checked separately against lunar new year, leap months, and midnight/time-zone boundaries.
-
-APK: `artifacts/Interlude-1.0.0-universal.apk`, 1,629,573 bytes. SHA-256: `ae4cd10d1ef7400b668cd536d21ed8c7b79bc7af886eb012f5e3962231ef8fc7`.
-
-## Historical Sony BRAVIA 5 checks
-
-Reported model BRAVIA 4K AE2, Android 14/API 34, ABI armeabi-v7a/armeabi only. Physical 3840x2160 with existing 1920x1080 UI override; resolution was not changed. Universal Release ran on ARMv7; emulator covered ARM64.
-
-Passed installation/first start/process recreation after force stop, Chinese greeting/Gregorian/lunar/clock rendering, discovery of 24 apps, D-pad/multirow scrolling, native Inputs picker with named devices including PlayStation 5 (no input switched), Network and Settings entry/Back focus, long-press management (temporarily hidden Help was restored; all 24 remained), app launch/recency (a video app moved first after Home), and actual Home/default-launcher resolution. No AndroidRuntime crash was observed.
-
-Keys were ADB-injected D-pad/confirm/long-press/Back/Home events, not exhaustive physical manufacturer-specific remote checks. No power-cycle or long-run test was performed. The stock launcher com.dangbei.TVHomeLauncher stayed enabled. Historical restore command:
-
-```sh
-adb -s <sony-address> shell cmd package set-home-activity com.dangbei.TVHomeLauncher/com.dangbei.leard.leradlauncher.ui.sony.main.MainActivity
-```
-
-Short rendering sample: initial multirow scroll 39 frames, 9 janky (23.08%, including first image upload/layout); warmed horizontal focus 288 frames, 7 janky (2.43%), P50 18ms/P90 34ms. These dumpsys gfxinfo samples are not sustained frame-rate guarantees. PSS was about 105 MiB.
-
-Screenshots, UI trees, and frame samples are under `artifacts/sony/`, final home `artifacts/sony/home.png`. No source change was made in that run; APK matched the historical hash above.
-
-
-## 2026-10-26: latest Release on physical Sony
-
-Installed current `art.anjing.interlude` Release 1.0.0 (versionCode 4) on paired BRAVIA 4K AE2 at 192.168.5.75, Android 14, armeabi-v7a, 1920x1080 UI, default font scale 1.0. Release build, three JVM tests, and Lint passed; Lint reported no issues. APK SHA-256: `e3358883b04a6757da3f5d16c5df22995efbb4aff9a2283233e8fd29d638adb5`.
-
-At the user's request, uninstalled old `dev.anjing.interlude`. Set the new package as Home and verified KEYCODE_HOME resolves to and resumes it; the stock launcher was not disabled. Checked clock/dates, five-column grid, third-row scrolling and top fade, real key-event long-press hide of Help, Settings long-press expansion, navigation to the hidden Help tile, and long-press restoration with focus following Help. Tested TV app launch and Home return. Inputs displayed Sony's native picker without selecting an input; Network opened NetworkActivity; Settings opened MainSettings, confirmed by its UI hierarchy after the vendor transition settled. No crash-buffer entries occurred during this session. Returned to the new Home with the temporarily hidden app restored.
-
-Evidence: `artifacts/sony-latest-20261026/` (screenshots, UI trees, session crash log). Keys were ADB-injected on the physical TV; physical remote hardware, power cycling, long-run performance, all-hidden mode, and exact Toast timing were not tested in this run. Connected instrumentation tests were not run, avoiding replacement/uninstallation of the installed Release. No production source changes were made.
-
-
-## 2026-10-26: curtain identity, date tracking, and undistorted artwork
-
-Changed English date tracking to 1.25sp and lunar tracking to 1sp, retaining native font scaling. Replaced the pause mark with pure white open stage curtains on black, provided an adaptive Android icon (including a monochrome layer), a vector TV banner with the Interlude wordmark, and a 512x512 sRGB Play Store PNG. The upload image is opaque and square; a separate preview applies the current 30% Play corner mask. Assets and notes are in `branding/`. No image-generation model or additional bundled fonts were used.
-
-On Sony, inspected Lebo `com.hpplay.happyplay.aw`: its banner and launcher icon both reference the same 144x144 PNG. Square/portrait banners now use padded icon fitting; thumbnail rasterization preserves intrinsic proportions within 384x216 for landscape banners and 128x128 for icons. Other landscape banners retain proportional cropping.
-
-Release, three JVM tests, and Lint passed (no issues). A new ArtworkTest passed on the Android 14 TV emulator, checking square, wide, portrait, and 16:9 source proportions for both thumbnail modes within half-pixel integer rounding. The initial test used an incorrect fixed ratio tolerance for small integer thumbnails; corrected the assertion to allow half a pixel of rounding.
-
-Installed the final 1.0.0/versionCode 4 Release on physical Sony using a data-preserving update. Screenshot and UI tree at `artifacts/brand-20261026/sony-home.*` show the revised date spacing and the square Lebo icon centered without stretching. Returned to Home. APK SHA-256: `cab5a2b99f0b90493bdc7659881f9ff420e3ccfde8359aada0abea5dba5fc701`. This incremental check did not repeat the full navigation or hidden-app suite.
-
-
-## 2026-10-26: tighter title gap, larger fade, and default sorting
-
-Moved the app title up 6dp within its existing 116dp reserved area by adding 12dp bottom padding; the resting tile row stays at the same edge. Increased the scroll-only fade from 32dp to 44dp, ending at that original first-row edge. Default sorting now prioritizes installed packages `com.gitvdemo.video`, `com.cibn.tv`, `com.ktcp.video`, and `com.hunantv.market`, in that order, followed by Chinese-leading names in native Chinese pinyin collation and remaining names in case-insensitive alphabetical order. Recent successful launches remain the primary sort key. Equal names resolve by package identity. Existing launch/hidden record storage and migrations remain intact.
-
-Passed Release build, six JVM tests, all 21 Android 14 TV emulator tests, and Lint with no issues. Unit coverage includes exact package priorities, a same-label nonpriority package, missing priorities, Chinese-before-English ordering, English case ties, and recency overriding default priorities.
-
-Installed 1.0.0/versionCode 4 on physical Sony. Before clearing data, existing recent TV use still ranked ahead of all four default-priority packages. Screenshots confirmed tighter title spacing, intact resting tiles, and the expanded fade when focusing row three. After testing, ran `pm clear art.anjing.interlude` successfully as requested and returned with KEYCODE_HOME. The clean initial order was 银河奇异果, CIBN酷喵, 云视听极光, MGTV-芒果TV, 帮助, 电视; focus was on 银河奇异果. Home resolution remained `art.anjing.interlude/.MainActivity`. No app was launched or hidden after clearing data.
-
-Evidence: `artifacts/layout-order-20261026/` (`before-reset`, `scrolled`, and `default-home` screenshots/UI trees). APK SHA-256: `f0860ec7af92fb6cec017448e780e78f23b76028851e06cf0406f3c8bfceeca5`.
-
-
-## 2026-10-26: restrained 5% tile focus scale
-
-Reduced tile focus scale from 1.10 to 1.05, matching header button scale. Retained 18dp grid spacing, 12dp tile corners, 3dp focus lift, and the existing borders. On Sony's 960dp-wide UI, tile width is about 155.2dp: each side grows 3.88dp at 5%, leaving about 14.12dp between one focused tile and its resting neighbor. Even conservatively allowing both adjacent tiles to reach 1.05 during a transition leaves about 10.24dp. The top focus inset also exceeds the 3dp lift plus the approximately 2.18dp vertical scale extension.
-
-Release, six JVM tests, and Lint passed with no issues. Installed Release 1.0.0/versionCode 4 on physical Sony. Inspected first-column, middle-column, last-column, and scrolled row-three screenshots: focus was visible without tile overlap or edge clipping. Returned using Home; no apps were launched or hidden, preserving the clean default records and default order. The connected device suite was not repeated for this single scale change. Evidence: `artifacts/focus-5-20261026/`. APK SHA-256: `251bffcc300f3cafcf3baafb779f666cb3078028e7d50c3a234ab1970b5511e5`.
-
-
-## 2026-10-26: title closer to app tiles
-
-Reduced the reserved title area's bottom padding from 12dp to 4dp, moving the title down 4dp without changing the grid, clock/date group, font sizes, or focus geometry. The title now sits 2dp above the center of its 116dp reserved area. Release, six JVM tests, and Lint passed with no issues. Installed 1.0.0/versionCode 4 on Sony and checked the resting screenshot/UI hierarchy. No apps were launched or hidden; the clean default order was preserved. Evidence: `artifacts/title-gap-20261026/home.*`. APK SHA-256: `e467e8ecbd326e57dd5c20654d578bf5f3aa3aff4f5e3fdde60c6f4eea4d08f5`.
-
-
-## 2026-10-26: additional 2dp title adjustment
-
-Removed the remaining 4dp bottom padding from the title area, moving the centered title down another 2dp. Release, six JVM tests, and Lint passed. Installed on Sony; UI hierarchy comparison confirmed a 4px title shift with unchanged tile bounds. No apps were launched or hidden. Evidence: `artifacts/title-gap-20261026/home-plus-2dp.*`.
-
-
-## 2026-10-26: selected-app title removed
-
-Removed the large selected-app text, its Crossfade import/animation, TitleHeight constant, overlay container, title spacing, and redundant grid wrapper. The grid now follows the header directly with its existing 54dp top padding (44dp fade region plus 10dp focus inset). Shared app-focus tracking remains necessary for header-down navigation and artwork glow. Labels appear only below tiles.
-
-Rebalanced the remaining layout: 48dp horizontal and 32dp top page padding, 48sp clock with 60sp line height, and 16dp separator-side spacing. Date sizes/tracking, five columns, 18dp grid spacing, 5% focus scale, and 44dp scroll fade remain. Sony default-font screenshots show three complete rows of tiles and labels; no title placeholder or title-sized blank area remains.
-
-Passed Release build, six JVM tests, all 21 Android 14 TV emulator tests, and Lint with no issues. Extended existing navigation coverage to return from Inputs to the second app and to assert that the synthetic focused app label appears once. On Sony, checked resting and deeper scrolling screenshots, Inputs focus, Down returning to CIBN酷喵, and Back preserving that focus. Key events were ADB-injected.
-
-After testing, successfully cleared only `art.anjing.interlude` data as previously requested and used Home. Default package order and a single selected-app label were confirmed; Home still resolves to the new package. Version remains 1.0.0/versionCode 4. Evidence: `artifacts/no-title-20261026/`. APK SHA-256: `ca54242f0a31e09bf08b8d4fcc39d17e5b79f240662f3967f1122291587ca78e`.
-
-
-## 2026-10-26: larger, brighter tile labels
-
-Increased tile labels from 13sp/18sp line height to 14sp/20sp. Unfocused labels now use Ink at 80% opacity instead of muted gray; focused labels retain full Ink opacity. Kept the same size in both focus states, baseline padding, system font, single-line ellipsis, and 150ms color transition. The disconnected network icon retains its separate muted treatment.
-
-Release, six JVM tests, and Lint passed with no issues. Installed 1.0.0/versionCode 4 on physical Sony and inspected `artifacts/labels-20261026/home.*`: the title-free three-row layout remains readable, with no tile overlap or cropped labels. No apps were launched or hidden, preserving clean default records. APK SHA-256: `edecbf3007a28429c3e1924d1bea8788ea33fd257290a4bec1182609dda691cd`.
-
-
-## 2026-10-26: permanent fade and Medium selection labels
-
-Removed the scroll-offset threshold, derived scroll flag, and 220ms top-fade opacity animation. The grid always uses the same 44dp alpha mask. Its endpoint now precedes the resting first-row edge by the 10dp focus inset, preserving full opacity for resting tiles including their 5% scale and 3dp lift. This removes the fade's scroll-triggered appearance/disappearance rather than delaying or smoothing the trigger.
-
-App labels explicitly use system Normal (400) weight when unfocused and Medium (500) when focused, retaining 14sp/20sp dimensions and 80%/100% Ink opacity. No new fonts or label scale were introduced. Clock remains Inter Light; English date remains Inter Regular.
-
-Release, six JVM tests, and Lint passed with no issues. Installed 1.0.0/versionCode 4 on Sony and inspected resting, deeper-scrolled, and returned screenshots/UI trees under `artifacts/permanent-fade-20261026/`. Resting artwork remains undimmed, selection remains readable, and the mask is independent of scroll state. Screenshots are static evidence; the removal of the opacity animation is verified in code. No app was opened or hidden; Home restored default focus without changing clean records. APK SHA-256: `8d886933ac7b302a7815135f515795849af27a8581acda3e22934e7cba8d8bb9`.
-
-
-## 2026-10-26: 10% tile focus and longer permanent fade
-
-Changed app-tile focus scale to 1.10; header buttons remain 1.05. Increased the permanent fade from 44dp to 52dp, retaining the separate 10dp clear focus inset. Grid top padding is consequently 62dp. Resting focused tiles remain below the fade endpoint, with about 2.66dp top clearance after the scale extension and 3dp lift on Sony. At Sony's 960dp logical width, a 154.4dp-wide tile extends 7.72dp per side: a focused tile retains about 10.28dp spacing from a resting neighbor; even two adjacent tiles fully scaled leave about 2.56dp of the 18dp gap.
-
-Release, six JVM tests, and Lint passed with no issues. Installed 1.0.0/versionCode 4 on Sony and inspected first-column, middle-column, and deeply scrolled screenshots/UI trees. No neighboring tile overlap, edge clipping, or resting-tile fade was observed. The fade remains independent of scroll state; focused labels remain Medium 500 at 14sp. Returned Home without opening or hiding apps, preserving default records. Evidence: `artifacts/focus-10-fade-52-20261026/`. APK SHA-256: `e89d2dcf52c67560caecc53a2ef3c968de5236f11e49fe95ca3fdd37858d00aa`.
-
-
-## 2026-10-26: slightly stronger ambient glow
-
-Raised ambient radial-gradient center opacity from 22% to 28% and its middle stop from 6% to 8%. Retained the selected-artwork color, gradient center/radius, and 650ms color transition. Release, six JVM tests, and Lint passed with no issues. Installed 1.0.0/versionCode 4 on Sony and inspected green/orange selection screenshots under `artifacts/ambient-20261026/`: the stronger color remains behind readable labels and artwork. Returned Home without opening or hiding apps, preserving default records. APK SHA-256: `6d9793d989c309f0e3e1c534e5fe7c9b64aed47b0a0905d874ca4b986e1c5bd2`.
-
-
-## 2026-10-26: final pre-release review
-
-Reviewed all seven production Kotlin files, four device-test files, unit tests, Manifest, resources, Gradle configuration, wrapper, licensing, and release workflow. Kept one app module and the existing Activity/ViewModel/data/system/ui boundaries; no services, repositories, dependency injection, polling, or adaptation layers were added. Necessary comments remain short English explanations of platform or lifecycle boundaries.
-
-Cached the fixed gradient brush with drawWithCache instead of allocating it on each draw. Regenerated the TV wordmark from the existing unmodified Inter Regular source, replaced the previous system-font outline provenance, supplied the missing Android icon preview, and completed README build/use/release instructions. Current UI geometry and behavior were retained: five columns, native sp scaling, 10% tile focus, Medium selection labels, permanent 52dp fade plus a clear 10dp focus inset, and 28%/8% ambient opacity.
-
-Authoritative Maven metadata confirmed the configured AGP 9.4.1, Kotlin 2.4.21, Compose BOM 2026.09.00, Activity 1.13.0, TV Material 1.1.0, Lifecycle 2.11.0, Coroutines 1.11.0, Test Runner 1.7.0, and Test JUnit 1.3.0 as the latest stable versions checked that day. Gradle's current-version endpoint confirmed 9.8.2. Actions were pinned to verified latest stable patch releases checkout 7.0.1, setup-java 6.1.0, and setup-gradle 6.4.0. The workflow still responds only to publication of the v1.0.0 Release and now verifies the APK signature before upload. actionlint 1.7.12 passed.
-
-Local Release, six JVM tests, all 21 API 34 TV emulator tests, and Lint passed (no issues). APK includes ARM64, ARMv7, x86, and x86_64 without ABI filtering. The only runtime platform permission is ACCESS_NETWORK_STATE; the merged Manifest also contains AndroidX's generated signature receiver permission. The existing local signing key matches Sony's installed certificate SHA-256 `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`; the GitHub secret was synchronized without printing or committing the key.
-
-Sony warmed navigation sample: 980 rendered frames, 8 janky (0.82%), P50 18ms/P90 34ms; PSS 79,867KB before and 81,838KB after, no swap and no crash-buffer entries for this process. This short sample does not prove long-run leak freedom or sustained frame rate. Evidence: `artifacts/final-review-20261026/`. The candidate APK SHA-256 is `54fc59987b709b36d1759b4e4332002ebef3e6f3a684e363c61ac2cff3e01333`. CI-built Release download, signature/digest checks, installation, Home verification, and requested final data clear follow publication.
-
-Separately labeled emulator screenshots at default and 2x fonts showed readable header dates and single-line ellipsized app labels without header/button overlap. Large fonts naturally reduce visible rows. The emulator font scale was restored to 1.0; Sony settings were not changed.
-
-
-### Final UI adjustment before tagging
-
-At the user's request, increased tile labels to 16sp with 24sp line height, kept Normal/Medium weights and the existing 25sp/5sp baseline padding, and raised English/lunar date opacity to 75%/60%. Sony screenshots and UI bounds (`sony-label-16.*` and `sony-label-16-row3.*`) confirmed readable resting labels and focused third-row labels without tile/label overlap; long names remain single-line ellipsized. Reran Release, all six JVM tests, all 21 TV emulator tests, and Lint successfully. Added Git text attributes to normalize source line endings while keeping Windows wrapper checkout as CRLF. This supersedes the earlier candidate digest: final pre-tag APK SHA-256 `900d639d9d83e54262ef843428675d0f1c2892800f0e56cc94ee03394811bb02`.
-
-
-### First remote release attempt: SDK manager path
-
-Run 40325571862 reached checkout, Java 27, Gradle setup, and signing-key restoration, then failed with `sdkmanager: command not found` before building any APK. GitHub's runner-image documentation confirms that command-line tools are installed under `$ANDROID_HOME/cmdline-tools/latest/bin` but not added to PATH. Updated the SDK step to invoke that installed executable directly, without adding another action or changing SDK versions. The initial assetless Release/tag created during this task is replaced with the corrected commit before republishing v1.0.0.
-
-
-### Second remote attempt: SDK package identifier
-
-Run 40326265204 invoked sdkmanager successfully, but Google returned no package named `platforms;android-37`. The actual stable package is `platforms;android-37.0`, matching the local `android-37.0` SDK directory and AGP's resolved boot classpath. Updated the install identifier and added an update of stable command-line tools before installing it. Application compile/target API 37, Build Tools 37.0.0, and version 1.0.0 remain unchanged. No APK was produced by either failed run.
-
-
-### CI artifact certificate gate
-
-Run 40327207020 passed its build, Lint, unit tests, and structural APK signature check. The downloaded asset matched GitHub's SHA-256 digest, but its signing certificate was `362bc4591b2fa704487c07fd5f3da912488d80140d5bb0a707444782922bd666`, which did not match Sony's installed `0d81...3b96` certificate. It was not installed and the mismatched attachment was removed. Local keytool/signingReport confirmed the existing `~/.android/debug.keystore` still contains the correct key.
-
-Made Release use an explicit sideload signing configuration pointing to that existing file, rather than inheriting the automatically managed debug configuration. The workflow now checks the restored keystore's certificate digest and requires the built APK to match the same fixed public certificate fingerprint before upload. This guards update compatibility as well as signature validity. No private signing material was printed or committed.
-
-
-## 2026-10-26: GitHub Release and Sony final acceptance
-
-Release workflow run 40328972399 passed from source commit `2d501e98c430c5b40bb645816cac84bb69656033`. Stable SDK installation, six JVM tests, Lint, R8/resource-shrunk Release build, restored-key fingerprint, final APK certificate verification, upload, and key cleanup all succeeded. The final `v1.0.0` tag points to that source commit. The earlier incompatible attachment was withdrawn and was never installed.
-
-Downloaded `Interlude-1.0.0.apk` from the GitHub Release. Its SHA-256 `6919cdf94f416ef284196757509750764bedad5dadd6097aee31b17d4c8f96c4` matches GitHub's asset digest. Its signer matches the existing Sony/local certificate `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`. Package/version checks confirmed `art.anjing.interlude`, versionName 1.0.0 and versionCode 4. Installed with a data-preserving update, pulled the installed base APK back, and verified its digest exactly equals the Release download.
-
-Set Interlude as Home and delivered KEYCODE_HOME on physical Sony. Verified header navigation and return, ordinary Back focus preservation, actual Lebo launch/recency, recency after force-stop/restart, real key-event hide/expand/Back/restore, and focus following restoration from the hidden section. The monitored Release process had 0 crash-log bytes. Checks used ADB key events, not exhaustive manufacturer remote hardware or power-cycle testing.
-
-After all acceptance checks, `pm clear art.anjing.interlude` returned Success. Home still resolves to and resumes Interlude. Focus/default order returned to 银河奇异果, CIBN酷喵, 云视听极光, MGTV-芒果TV. The stock `com.dangbei.TVHomeLauncher` remains enabled. No app was launched or hidden after clearing data. Sony and emulator font settings remain at default 1.0. Evidence and machine-readable verification are in `artifacts/github-release-20261026/`; the final screen is `default-home.png`. Long-duration leak, thermal, power-cycle, and physical remote hardware coverage remain outside this run.
-
-Release: https://github.com/qvshuo/Interlude/releases/tag/v1.0.0
-Workflow: https://github.com/qvshuo/Interlude/actions/runs/40328972399
-
-## 2026-10-28: reuse unchanged catalogs on return Home
-
-AppCatalog now checks PackageManager's package-change sequence on IO before scanning. An unchanged catalog is reused; configuration changes, package broadcasts while visible, and launch failures still scan. The sequence is captured before each scan and advanced only after it finishes, leaving concurrent package changes pending. Unreadable artwork remains eligible for retry. Resume still reapplies local launch ordering, and Home still resets focus. No receiver lifetime, animation, system entry point, artwork policy, permission, or version change was needed.
-
-On the existing Television_1080p Android 14/API 34 emulator at default font scale, the same debug instrumentation benchmark warmed the catalog five times and timed 40 subsequent loads. Before optimization, median was 0.917459ms and P90 1.027750ms. After optimization, a standalone run after the build finished measured median 0.256458ms and P90 0.297583ms. These measure catalog refresh only, not Home key-to-frame latency or Sony performance. The absolute median saving was about 0.66ms on this emulator.
-
-Rapid Home checks passed both before and after the optimization: five trips from the second tile to system Settings and back, each with six Home intents separated by 50ms. Focus returned to the first tile; settled RGB channel differences in the sampled empty background were 0.0, with no stuck glow. The emulator retained Google's launcher as the actual Home key destination even after assigning Interlude the HOME role, so these checks used explicit MAIN/HOME intents. They do not establish physical Sony remote behavior. The stock launcher was never disabled, and the emulator's HOME role was restored afterward.
-
-All six JVM tests, all 24 emulator tests (none skipped), Lint with no issues, and the R8/resource-shrunk Release build passed. Tests cover unchanged-catalog reuse, forced scans, package disable/enable between catalog loads without broadcast delivery to the catalog, and recency reordering on resume without a stop. Release remains 1.0.0/versionCode 4 and uses the existing signer `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`. APK SHA-256: `5d6e2d8b95cf5bd88f0db5432d53349a17b5b629d9bb3838543ca21a47a981f9`. Evidence: `artifacts/home-performance-20261028/` and the Gradle connected-test reports. No Sony installation, commit, tag, or GitHub Release was performed.
-
-## 2026-10-28: Aerial review follow-up measurements (emulator only; Sony pending)
-
-Compared the published Release (`6919cdf9...`) and the current catalog-reuse Release (`5d6e2d8b...`) on the same API 34 Television_1080p emulator, retaining app data, default fonts, and the original Home launcher. After one discarded warm-up per mode, ten process-cold launches via explicit MAIN/HOME intents measured am start TotalTime medians of 254ms and 256ms, P90 260ms and 284ms. These are initial-frame times, not populated-grid readiness; OS caches and compilation profiles were not cleared. Ten returns from Settings measured am start WaitTime medians of 5ms for both, P90 9ms and 7ms. WaitTime for an existing task is command completion, not rendered-frame latency. This sample does not establish a user-visible startup improvement or regression.
-
-Baseline and candidate navigation samples reported 285/286 rendered frames, P50 44/42ms and P90 61/65ms. Emulator logs identify software graphics (swangle, lavapipe, llvmpipe), so these are not evidence of Sony rendering performance and do not justify animation or rendering changes. A separate three-row workload used ten temporary resource-only fixture apps plus the five existing apps: 444 frames, P50 57ms, P90 69ms. It is a labeled synthetic emulator workload, not a device comparison. Both startup/navigation runs had empty crash-buffer captures.
-
-Screenshots and UI trees confirmed focus moving along the first row, down through the second and third rows, and back up to the same column. The first-row focus returned to its original bounds. On the second row, the focused tile's top stayed at y=516px when moving from the first column to the fifth and back; the first-column bounds returned exactly to `[116,516][425,690]`. No persistent horizontal-navigation scroll drift or settled tile clipping was observed. These are settled-state checks, not a frame-by-frame animation proof. All ten fixture packages were removed afterward. No new production changes or permanent diagnostics were added, and no disk cache was introduced.
-
-Sony was not connected or discoverable through ADB; its current IP and debugging port were requested. No Sony package, data, settings, or default launcher was changed in this follow-up. Actual Sony cold-start, frame-time, and rapid cross-row checks remain pending that connection. Scripts, raw output, screenshots, UI trees, and summaries are under `artifacts/aerial-review-20261028/`.
-
-## 2026-10-28: glass finish and continuous tile corners
-
-Added a fixed glass treatment to app tiles and header buttons, combining CleanYourTV's restrained rim and sheen with Aerial's continuous-corner construction. Tiles use 16dp corners with smoothing 0.6; header buttons remain circular. The dark substrate is translucent, and a small top reflection strengthens on focus over 180ms. Focus rims remain 1dp, 95% white on tiles and 65% on header buttons. App labels, five-column layout, focus scale/lift, top fade, system actions, and hiding behavior retain their existing settings. No live blur, refraction, wallpaper, theme selection, dependencies, services, or permissions were introduced.
-
-An initial generic-path clip showed aliasing in emulator screenshots. The final implementation instead bakes antialiased continuous masks and gradient rims into immutable small textures in drawWithCache, retaining the modifier across focus changes. An isolated control layer composites its content through that mask; native TV Surface handles input, focus, and scale. The new drawing helper is 107 lines. Aerial attribution was added to the MIT notice, and the full combined notice is bundled in assets/LICENSE.txt.
-
-Restarted Television_1080p with a visible desktop window at the user's request and installed the final signed Release for direct inspection. Inspected resting/focused tiles and circular header controls at default font settings. Six JVM tests, all 24 emulator tests (none skipped), Lint with no issues, and the R8/resource-shrunk Release build passed. The existing grid, hide/restore, Back, and rapid Home tests also passed with the glass treatment.
-
-A matching visible-emulator horizontal-navigation sample measured 200 frames before and 180 after: P50 69/53ms, P90 97/101ms. Both runs were dominated by software rendering and missed frame deadlines; these noisy samples do not establish Sony performance or a rendering speedup. The final sample's PSS was 61,346KB with no swap. The captured crash buffer was empty. Evidence is in artifacts/glass-20261028/, including before/after screenshots and raw frame data. Sony was not modified or tested in this change.
-
-Release remains 1.0.0/versionCode 4, signed with the existing certificate `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`. APK SHA-256: `0b57a6641ad4f0f094dd7baef7602e18e3a48df94cdf6871faa6376eefa6a7cc`. No commit, tag, or GitHub Release was created.
-
-## 2026-10-28: glass, motion, and typography refinement
-
-Inspected the configured androidx.tv:tv-material:1.1.0 scale implementation locally: native focus is a 300ms tween, unfocus is 500ms, and the easing is cubic-bezier (0, 0, 0.2, 1). Matched glass, lift, and label emphasis to those parameters while leaving native scale and pressed/released behavior intact. No replacement input handling or custom focus engine was introduced. Label brightness and lift now share one emphasis state; app names retain system Normal 400 at 16sp in both focus states, removing the weight-induced change in glyph width. Resting label opacity is 78%, focused opacity is 100%.
-
-Added an approximately 0.5dp inner dark keyline at 15% opacity so the same glass edge remains visible on light banners. The sheen now follows an upper-left light direction and peaks at 14% white before focus-strength compositing. The continuous 16dp/0.6 corners, native circular buttons, existing layout, and 650ms ambient color transition remain. The clock retains Inter Light 48sp, tabular digits, and its original spacing. English date tracking was reduced from 1.25sp to 1sp, lunar tracking from 1sp to 0.5sp, and separator opacity from 20% to 16%; date sizes and contrast remain 14sp, 75%/60% white. Native font scaling and the existing font assignments are preserved.
-
-All six JVM tests, all 24 emulator tests (none skipped), Lint with no issues, and the R8/resource-shrunk Release build passed. Installed the final Release in the visible emulator, inspected light/dark banners and focused header controls, and sampled frames from a rapid-direction-reversal recording. The sampled frames show smooth intermediate states with no label geometry change; the software-rendered recording is not proof of smooth Sony playback. UI trees confirm identical Play Store, Settings, and Cast moderator label bounds before and after changing focus between light/dark tiles. A separately labeled 2x-font stress screenshot retained readable dates, reachable header buttons, and single-line ellipsized app names without overlap. Restored the default 1.0 font scale and left the final launcher preview visible. The captured crash buffer was empty. Evidence: artifacts/glass-refinement-20261028/.
-
-No new dependencies, fonts, themes, services, permissions, or permanent diagnostics were added. The glass helper is now 117 lines. Sony was not connected, installed, or tested. Version remains 1.0.0/versionCode 4 with the existing signing certificate. Final APK SHA-256: `2c4e0ddc2ed549efae16ad99d8ba77b0e1c4dcf2d1050a732814c3b4d0a96733`. No commit, tag, or GitHub Release was created.
-
-## 2026-10-28: final review for 1.0.1
-
-Reviewed all eight production Kotlin files, the four behavior/artwork device-test files and catalog benchmark, unit tests, Manifest, resources, signing, licensing, and workflow. Kept one app module and the existing Activity/ViewModel, data, system, and UI boundaries. The glass drawing helper is the only additional production file; no services, repositories, injection, polling, theme framework, or compatibility layers were added. Removed a duplicated cache comment and redundant test stream closure, and made the benchmark's Unit return explicit. Existing comments explain necessary platform, lifecycle, cache, or input boundaries. README is one sentence describing the launcher and Android 14+ requirement; technical conventions remain in AGENTS.md.
-
-Checked the five-column geometry at the emulator's 960dp logical width. A 154.4dp tile grows 7.72dp on each side at 1.1 scale, retaining 10.28dp separation from a resting neighbor. The scale plus 3dp lift leaves approximately 2.66dp clearance below the top fade endpoint at rest. Circular header buttons retain their original 40dp size and 10dp spacing. Screenshots and UI trees show readable fixed-weight labels, no resting-tile fade, no label/tile overlap, and correct focus/scroll restoration across three rows. Date typography, default font scaling, and the separately labeled large-font check retain the preceding review's results.
-
-All six JVM tests, all 24 Android 14 TV emulator tests (none skipped), Lint with no issues, and the signed R8/resource-shrunk Release build passed. An additional synthetic three-row test installed ten temporary fixture apps and injected 360 navigation key events. Focus returned to the original tile/column and bounds. PSS samples were 51,150KB, 54,353KB, 55,453KB, and 52,769KB, with no swap and an empty crash-buffer capture. No monotonic growth was observed in this short sample; it does not prove long-run leak freedom. The software-rendered emulator recorded 544 frames, P50 48ms/P90 117ms, which does not establish Sony frame rate. All fixture packages were removed, and the Release preview was left visible. Sony hardware, thermal, long-duration, and power-cycle behavior were not retested.
-
-Official Maven metadata confirmed the pinned AGP, Kotlin, Compose BOM, Activity, TV Material, Lifecycle, Coroutines, and Android test dependencies remain the latest stable versions checked today. Gradle's official current-version endpoint still reports 9.8.2. actionlint 1.7.12 passed after checksum verification of its official release archive. APK inspection confirms Android 14 minimum, only ACCESS_NETWORK_STATE plus AndroidX's generated receiver permission, all four dependency ABIs, and both matching bundled license notices.
-
-At the user's request, prepared versionName 1.0.1/versionCode 5 and a new v1.0.1 release without moving or replacing v1.0.0. The release workflow responds only to publication of v1.0.1 and additionally verifies the APK version against the release tag before upload. The existing signing secret is configured; the local APK matches the original signing certificate `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`. Local APK SHA-256: `e1a9a3b51309410e460a893d599328e0636c0662289293f171263b24bf263d29`. Evidence: artifacts/pre-release-1.0.1-20261028/. CI artifact verification follows publication.
-
-### ARM-only release adjustment
-
-The initial 1.0.1 Action (40549436897, source 512a953) passed and uploaded an APK containing four ABIs. Before final artifact acceptance, the user requested ARMv7 and ARM64 only. Returned this session's 1.0.1 release to draft and removed that attachment; the existing 1.0.0 release/tag was left unchanged. Added Gradle abiFilters for armeabi-v7a and arm64-v8a, updated AGENTS.md, and added a matching ZIP-content assertion to the Release workflow before upload.
-
-Six unit tests and the signed Release build passed. The ARM filter initially triggered ChromeOsAbiSupport because x86_64 was absent. Disabled only that check with an explanatory comment: the app requires Leanback and deliberately targets ARM TVs. The first device-test attempt found no connected emulator; reopened the ARM64 TV emulator and reran all 24 device tests successfully with none skipped. APK inspection confirms exactly the two requested ABIs, unchanged versionName 1.0.1/versionCode 5, and the original signing certificate. actionlint 1.7.12 passed. Final Lint rerun reported no issues. Local ARM-only APK SHA-256: `041c9a698a9a8e55f21357f8cb7258179af9b679c7834ee572aac2adb386329a`. Evidence: artifacts/release-1.0.1-arm-20261028/. This supersedes the four-ABI candidate for this release.
-
-### Published ARM-only artifact acceptance
-
-Release Action [40605517260](https://github.com/qvshuo/Interlude/actions/runs/40605517260) passed on source commit `c14eb6395441595340bddb720d9c3919999fe118`, including unit tests, Lint, Release build, certificate/tag-version checks, the exact two-ABI assertion, and upload. Downloaded Interlude-1.0.1.apk from the [published release](https://github.com/qvshuo/Interlude/releases/tag/v1.0.1): SHA-256 `82ef4f57c8c537b25a23d2ddaed431d72fb0883acddf46a7f557ee8956a74116` matches GitHub's asset digest. Independently verified its original signing certificate, package name, version 1.0.1/code 5, Android 14 minimum, bundled license notice, and exactly armeabi-v7a plus arm64-v8a.
-
-Installed the downloaded APK on the ARM64 TV emulator, pulled the installed base APK back, and confirmed the same digest. The launcher rendered successfully in the visible window with no Interlude crash entries. The shared crash buffer contains earlier com.android.tv.settings detached-fragment errors from the emulator; no Interlude process is named in those entries. The v1.0.1 tag points to the verified source commit; v1.0.0 still points to `2d501e98c430c5b40bb645816cac84bb69656033`, and its original APK digest remains `6919cdf94f416ef284196757509750764bedad5dadd6097aee31b17d4c8f96c4`. Sony was not modified. This post-release record does not change the tagged application source.
-
-## 2026-10-28: 1.0.2 Home removal feedback and focus review
-
-Replaced the project-owned action Toasts with Removed from Home: <app>, Added to Home: <app>, and All apps are already on Home. Display-range changes no longer create or cancel Toasts. Expanding all apps sets the first removed app as the pending focus target in the same state update; collapsing selects the first Home app or Settings when Home is empty. The existing package-based records and in-memory expansion state are unchanged.
-
-Fixed an initial-focus boundary: the old scroll-to-start branch could override an explicit pending target below the viewport before any app had focus. Pending targets now take priority over that branch, using the existing scroll/layout/frame/focus sequence. No extra focus state, retries, arbitrary delays, services, or abstractions were added. Refactored the existing real-key test helper to reuse the same press/repeat/release sequence for both app removal and Settings range switching.
-
-All six JVM tests, all 26 Android 14 TV emulator tests (none skipped), Lint with no issues, actionlint 1.7.12, and the signed R8/resource-shrunk Release build passed. The added regressions cover a removed app initially below the viewport, return to the first Home app, and repeated real Settings holds without opening/removing the new focus target. Updated existing tests cover empty Home, all apps on Home, range switching, adding the last removed app back, Back preservation, and Home reset. The warm catalog benchmark measured median 0.239584ms/P90 0.339417ms; this is a catalog-only emulator sample, not a Sony latency claim.
-
-Reviewed the production boundaries, comments, cache invalidation, lifecycle, key suppression, and UI geometry. Existing glass, typography, five-column spacing, fade clearance, and native TV motion values required no further cosmetic changes. Default-font screenshots and UI trees show automatic focus on the removed section, the first Home app after collapsing, and Settings when no removed apps exist. Real-key screenshots confirm the three native Toast messages; an expansion screenshot retains the preceding removal Toast without replacing it. Both manually removed test apps were added back afterward, and the launcher preview was left visible. No Interlude process appears in the shared crash buffer. These checks do not establish long-run or Sony hardware stability.
-
-Prepared versionName 1.0.2/versionCode 6, retaining only armeabi-v7a and arm64-v8a and the existing signing certificate. APK and bundled-license inspection passed. Local APK SHA-256: `f07a2b8d2b1d1a1696c58c89b3594c5718cffe802dd5f80273099028ae92b026`. README remains one sentence; AGENTS.md and APP_DESIGN.md describe the new behavior. Existing 1.0.0 and 1.0.1 releases will be retained. Evidence: artifacts/release-1.0.2-20261028/.
-
-### Published 1.0.2 artifact acceptance
-
-Release Action [40713925028](https://github.com/qvshuo/Interlude/actions/runs/40713925028) passed on source commit `9205814bc9e3894909b41b1c8f803563590536d2`. Downloaded the [published APK](https://github.com/qvshuo/Interlude/releases/tag/v1.0.2) and independently verified GitHub's digest, the original signing certificate, versionName 1.0.2/versionCode 6, Android 14 minimum, both ARM ABIs, and the bundled MIT notice. Published APK SHA-256: `cc24aebe84748c30c11414d8a527fc2a5e60115ec06a066ca356cc0c0249f4d4`.
-
-Installed the downloaded artifact on the ARM64 TV emulator, pulled its installed base APK, and confirmed an identical digest. The visible launcher rendered successfully with the existing app records; no Interlude process appears in the shared crash buffer. No Sony installation or hardware acceptance was performed. Release notes contain only user-facing changes and platform requirements. Existing release tags and attachments were not replaced. This post-release record leaves the tagged application source unchanged.
-
-## 2026-11-05: supplied artwork replaces the vector icons
-
-Replaced the native vector launcher mark, adaptive foreground, and TV banner with bitmaps derived from the three supplied PNGs. The adaptive foreground uses the transparent source; the legacy icon and Play Store asset use the opaque square; the banner keeps its 16:9 composition. Old `drawable/ic_launcher.xml`, `drawable/ic_launcher_foreground.xml`, `drawable-anydpi/ic_launcher.xml`, and `drawable/launcher_banner.xml` were removed, together with the black `launcher_background`, which now matches the artwork background `#091327`.
-
-Every output is a lossless LANCZOS downscale of the source pixels: no crop, colour change, aspect change, or recompression, verified by comparing the packaged bitmaps against a fresh LANCZOS render (maximum channel difference 0). The adaptive foreground keeps the mark's largest opaque radius inside the 66dp safe circle at 98% (measured 32.38dp of 33dp) and centred within 0.5px, so system masks cannot clip it. Densities are 108-432px foregrounds and 320-1280px-wide banners.
-
-`./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease` passed: 6 JVM tests, no failures or skips; Lint reports zero issues; signed R8/resource-shrunk Release built. `aapt2 dump badging` on the Release APK reports `icon='res/E4.xml'` (the shrunken `mipmap-anydpi` adaptive icon) and `banner='res/AW.png'`, and the Debug APK retains all five density pairs. No emulator or physical-device launch check was performed for this icon-only change. The three source PNGs were deleted after generation and are not committed.
-
-Follow-up tidy keeps only artwork that is actually used. `branding/tv-banner.png` was byte-identical to `mipmap-xxxhdpi/banner.png` (same SHA-256) and was removed rather than stored twice; `android-icon.png` and `play-store-rounded-preview.png` were previews with no build, code, or documentation consumer and were removed as well. `branding/logo.png` is now a 256px transparent mark, and `play-store-icon.png` stays the single 512x512 store asset. No new directory was added: store and documentation images stay in the existing `branding/`, and app-facing bitmaps stay in `app/src/main/res/mipmap-*`. The source PNGs remain uncommitted.
-
-Final consolidation removes the store asset and the extra directory. The app is sideloaded only, so the dedicated 512x512 store image had no consumer; it was deleted rather than kept for a hypothetical upload. The README mark moved to `logo.png` at the repository root, and the `branding/` directory was deleted, leaving the identity notes in `APP_DESIGN.md` and no additional top-level directory. Packaged artwork is unchanged at 11 files: five foregrounds, five banners, and one adaptive-icon XML. Re-ran `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease`: 6 JVM tests with no failures, Lint with zero issues, Release built with `icon='res/E4.xml'` and `banner='res/AW.png'`. The README image path resolved to a 256x256 transparent PNG at that time.
-
-## 2026-11-05: user-supplied README logo
-
-The user replaced the root logo.png with a 2048x2048 rounded navy icon carrying the same curtain mark plus a drop shadow. At the user's instruction the image was only downscaled, never redrawn, recoloured, or cropped: the 256x256 result matches an independent LANCZOS reference downscale with a maximum channel difference of 0, keeps the authored corner radius and alpha shadow ramp, and stays square (opaque bounds 208x211 due to the shadow offset). File size went from 739 KB to 35 KB.
-
-APP_DESIGN.md no longer calls this file a transparent mark, since the new artwork is an opaque rounded square with transparency outside it. Packaged resources under `app/src/main/res/mipmap-*` were not touched.
-
-## 2026-11-07: source and test file naming
-
-Renamed ui/Clock.kt to ClockText.kt and ui/Glass.kt to GlassModifier.kt without changing their contents. Renamed PlatformTest to AppCatalogTest, moving its existing lunar-calendar test to ClockTextTest so the catalog test name matches its scope. Moved the shared appTile test helper from HomeUiTest.kt to HomeTestHelpers.kt. Packages and runtime behavior are unchanged.
-
-`./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:assembleDebugAndroidTest` passed. Device tests were compiled but not run. Version remains 1.0.2/versionCode 6.
-
-## 2026-11-07: 1.0.3 version and Release build
-
-Prepared versionName 1.0.3/versionCode 7, including the supplied launcher artwork and source/test file naming cleanup. Updated the design heading, version constraints, and release workflow to v1.0.3 with the Interlude-1.0.3.apk attachment name.
-
-`./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:assembleDebugAndroidTest` passed: six JVM tests without failures or skips, Lint passed, signed R8/resource-shrunk Release built, and device tests compiled. No device tests or installation checks were run. APK inspection confirms Android 14 minimum, versionName 1.0.3/versionCode 7, exactly armeabi-v7a and arm64-v8a, the original signing certificate `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`, and an unchanged bundled MIT notice. Local APK SHA-256: `ca6b125767d18d6615ce4bc1cc21d8769881cdc1fd6977cca1042522bb9928e1`.
-
-## 2026-11-07: focused performance and stability review
-
-Reviewed production code, tests, package boundaries, lifecycle registration, focus transitions, Toast behavior, cancellation, artwork caching, and comments. Kept the existing single-module data/system/ui structure. Existing comments explain platform boundaries or non-obvious reasons; no additional architecture or speculative fallback handling was introduced.
-
-Network callbacks now deliver capability snapshots directly on the main looper, with onLost clearing the icon state. The Activity takes one initial snapshot before registering and unregisters at onStop. Removed the synchronous network query wrapper from TvActions. This follows Android's [network callback guidance](https://developer.android.com/develop/connectivity/network-ops/reading-network-state), avoiding queries that race callback delivery. Glass textures now wrap their completed bitmap directly instead of allocating an immutable copy and recycling the original. The bitmap remains private to the draw cache and is not mutated after publication; [asImageBitmap](https://developer.android.com/reference/kotlin/androidx/compose/ui/graphics/package-summary) shares the bitmap without copying. This removes one full-size copy for each of the three cached textures per control; no frame-rate improvement is claimed.
-
-`./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease` passed: six JVM tests, no failures or skips, Lint with zero issues, and signed R8/resource-shrunk Release built. `ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest` passed all 26 tests with no failures or skips on the API 34 Television_1080p emulator after restarting it. The first run had a missing Compose hierarchy failure and then lost the emulator connection; its incomplete results are retained under artifacts/polish-20261107/first-device-run/. The complete rerun is retained under artifacts/polish-20261107/passed-device-run/.
-
-The 40-sample warm catalog benchmark measured median 0.754459ms and P90 1.177292ms. These are emulator catalog timings, not rendering or hardware TV measurements. Rerun logs contain no Java fatal exception attributed to Interlude; they contain five fatal exceptions from com.android.tv.settings during repeated Settings launches. No dedicated network-switching test, physical-TV check, long-duration memory test, or frame-rate comparison was performed. Version remains 1.0.3/versionCode 7.
-
-## 2026-11-07: 1.0.4 release preparation
-
-Prepared versionName 1.0.4/versionCode 8 with callback-based network indicator updates and reduced glass texture allocation. Updated the release workflow and version documentation to v1.0.4. `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease` passed. The preceding performance/stability review passed all 26 emulator tests on the same runtime changes before this version update; device tests were not repeated for the version bump.
-
-Local APK inspection confirms Android 14 minimum, exactly armeabi-v7a and arm64-v8a, the original signing certificate, and the matching bundled MIT notice. R8 and resource shrinking remain enabled. Local APK SHA-256: `18e6ff144170a212a616543387436d4742d4fb70c2d083753869f3f2887ca211`. GitHub Release build and artifact verification follow publication.
+| 2026-10-25–26 | Android 14 TV emulator navigation, fonts, grid, hide/restore, and artwork checks passed during successive revisions. Final 1.0.0 review passed six JVM tests, 21 device tests, Lint, and Release. | `artifacts/final-polish/`, `artifacts/final-review-20261026/`, `artifacts/layout-order-20261026/`. Intermediate typography and layout checks describe superseded designs. |
+| 2026-10-26 | Published 1.0.0 APK installed as a data-preserving Sony update; app navigation, launch recency across restart, hide/expand/restore, Back, and Home delivery passed. Crash capture was empty. | `artifacts/github-release-20261026/`; [successful release run](https://github.com/qvshuo/Interlude/actions/runs/40328972399). Acceptance used ADB key events, not exhaustive physical-remote or power-cycle testing. Earlier release runs 40325571862 and 40326265204 failed at SDK setup before producing APKs. |
+| 2026-10-28 | Catalog reuse: six JVM and 24 emulator tests, Lint, and Release passed. Warm-load median 0.256458ms/P90 0.297583ms. | `artifacts/home-performance-20261028/`. Catalog timings only; explicit Home intents were used because emulator Home resolution differed from Sony. |
+| 2026-10-28 | Cold-start, return, multirow navigation, and software-rendered frame samples compared baseline/candidate; no persistent focus drift or crash was observed. | `artifacts/aerial-review-20261028/`. No demonstrated startup improvement; software frame times do not establish hardware-TV performance. |
+| 2026-10-28 | Glass and motion revisions passed six JVM and 24 emulator tests, Lint, and Release. Short synthetic multirow run recorded PSS 51,150/54,353/55,453/52,769KB with no swap or crash. | `artifacts/glass-20261028/`, `artifacts/glass-refinement-20261028/`, `artifacts/pre-release-1.0.1-20261028/`. No monotonic growth in this sample; hardware smoothness and long-duration leaks unverified. |
+| 2026-10-28–29 | 1.0.1 ARM packaging and 1.0.2 removal feedback/focus checks recorded. | `artifacts/release-1.0.1-arm-20261028/`, `artifacts/release-1.0.2-20261028/`, `artifacts/sony-install-1.0.2-20261029/`. See Git history for the individual release hashes and device observations. |
+| 2026-11-05 | Supplied artwork packaging, unmodified README logo downscale, six JVM tests, Lint, and Release passed. | Packaged icon/banner inspected; logo matched independent LANCZOS downscale. No new device acceptance. |
+| 2026-11-07 | Source/test naming cleanup and 1.0.3 build passed six JVM tests, Lint, Release, and device-test compilation. | No device tests or installation in that build-only check. |
+| 2026-11-07 | Network callback and glass allocation review passed six JVM tests, all 26 API 34 TV emulator tests, Lint, and Release. Warm catalog median 0.754459ms/P90 1.177292ms. | `artifacts/polish-20261107/passed-device-run/`; initial incomplete run is in `first-device-run/`. Rerun logs had no Interlude fatal exception but five system Settings fatal exceptions. No physical-TV or sustained frame/memory validation. |
+| 2026-11-07 | 1.0.4 preparation passed unit tests, Lint, and signed/shrunk Release. Version/code, ARM ABIs, Android minimum, signer, and bundled MIT notice verified. | Local APK SHA-256 `18e6ff144170a212a616543387436d4742d4fb70c2d083753869f3f2887ca211`. Device suite was not repeated for the version bump. |
 
 ## 2026-11-07: verified 1.0.4 published artifact
 
 [Release Action 42259773626](https://github.com/qvshuo/Interlude/actions/runs/42259773626) passed on tagged source commit `991fff12e36e078e64f4312f499fca2a4d6bb8e3`, including unit tests, Lint, Release build, signature/version/ABI checks, and attachment upload. Downloaded [Interlude-1.0.4.apk](https://github.com/qvshuo/Interlude/releases/tag/v1.0.4) and independently verified GitHub's digest, versionName 1.0.4/versionCode 8, Android 14 minimum, both ARM ABIs, the original signing certificate, and the bundled MIT notice. Published APK SHA-256: `9936196b01038922491fa03894a64f2fbdf99f8ecb8a4d93821362b70254f1e1`.
 
 The downloaded artifact is retained under artifacts/release-1.0.4-20261107/. No installation or hardware acceptance was performed for this published artifact. Existing release tags and attachments were not replaced. This post-release record leaves the tagged application source unchanged.
+
+## 2026-11-08: minimal catalog, refresh, and focus optimization
+
+Kept versionName 1.0.4/versionCode 8, the single app module, existing dependencies, sorting, local record format/migration, appearance, and controls. Reviewed independent directory/artwork caching, stable entry selection, serialized cancellation, persistent forced invalidation, and package sequence consumption. The sequence is captured before discovery and checked again afterward; changes during artwork loading remain pending for the next refresh. No scheduling framework or additional architecture layer was introduced.
+
+Moved initial/Home focus selection and the last selected app into the ViewModel. UI retains only request execution and transient drawing/input state. The first emulator run exposed pre-load automatic header focus being treated as a restoration target; the ViewModel now ignores focus reports until loaded and chooses the initial app explicitly. The failed run is retained in `artifacts/minimal-20261108/first-device-run/`.
+
+Added Android ICU checks for lunar new year, the sexagenary-year transition, 29/30-day month ends, leap-month entry/exit, midnight, regional time zones, and fixed offsets. Fixed-offset ZoneIds now pass through Java's TimeZone conversion so ICU receives a recognized GMT-prefixed identifier. Unicode fallback tests include supplementary Han, surrogate-pair emoji, combining marks, flags, and a joined emoji sequence. Catalog tests also cover TV/Launcher precedence, reversed/shuffled entry order, and cancelled forced invalidation followed by ordinary refresh. Existing tests cover real long-press key events, hide/restore, expansion/collapse, Back, Home, refresh focus, package changes, and record migration.
+
+Glass inspection found three Bitmap-backed textures per rendered control in `drawWithCache`; animated focus is read only in `onDrawWithContent`. Focus changes therefore reuse those textures. Size/density changes or removal of the drawing node release its references for normal runtime reclamation. No manual recycling is added because drawing can still hold the bitmap; no global cache or rendering change was needed. This code inspection is not an allocation trace or long-duration leak test.
+
+Reorganized the four project documents by responsibility, replacing repeated current rules with links and condensing superseded historical descriptions into the evidence index above. Prior full records remain in Git history.
+
+Final `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --offline` passed: six JVM tests, no failures/skips, Lint with no issues, and signed R8/resource-shrunk Release built. Final `ANDROID_SERIAL=emulator-5554 ./gradlew :app:connectedDebugAndroidTest --offline` passed all 32 tests, with no failures or skips, on Television_1080p (Android 14/API 34, ARM64, 1920×1080). Final reports are retained in `artifacts/minimal-20261108/passed-device-run/`. Warm catalog median was 0.504084ms/P90 1.726583ms over 40 samples; settled background difference after rapid Home intents was 0.0. These are emulator measurements, without a matched performance baseline.
+
+Installed the previously downloaded published 1.0.4 APK, opened Home, then installed the new Release with `adb install -r`; both installations succeeded. The app ID, data directory, first-install timestamp, and visible app order remained the same across the update. This verifies an in-place update and observable Home continuity, not a byte-for-byte inspection of Release preferences (this production emulator disallows root and Release run-as). Instrumentation separately verifies persistence and legacy record migration. The final APK retains versionName 1.0.4/versionCode 8, Android 14 minimum, exactly armeabi-v7a/arm64-v8a, and signer SHA-256 `0d81ab7cb1a16d58d91a953fe62049eb77fc840cc544a297ae1854f54bc73b96`. Bundled MIT notice still matches LICENSE.
+
+A short 120-key Release navigation sample recorded total PSS 39,928/46,753/41,961/42,323 KiB and swap PSS 594/231/231/231 KiB. This small sample showed no monotonic PSS growth; it is not a long-run leak or multirow scroll benchmark. Software-rendered emulator frame output recorded 75 frames, P50 69ms/P90 93ms and 61.33% jank, so it cannot establish hardware smoothness or a regression against the published build. The crash buffer contained one system Settings exception from the earlier test run and no Interlude fatal exception. Screenshots, package metadata, raw memory/frame output, and upgrade comparison are in `artifacts/minimal-20261108/`.
+
+Release APK: `app/build/outputs/apk/release/app-release.apk`; SHA-256 `759297bb9ab087384b746760416f01d214ef9da1c599e2e402847fdb65fb2172`. At the user's direction, this round validates only the emulator. Physical-TV scrolling, sustained memory behavior, actual remote Home/default-launcher delivery, and hardware upgrade acceptance are deferred to the user's later testing. No damaged-vendor-artwork fault injection or deterministic mid-scan install/uninstall stress test was performed; those paths were reviewed in code. No release was published.
+
+## 2026-11-08: final project review before commit
+
+Reviewed all eight production Kotlin files, JVM/device tests, module boundaries, build/release configuration, Manifest, resources, assets, licenses, and documentation. Retained the existing architecture, UI, input handling, sorting, migration, glass textures, and dependency versions. Consolidated catalog refresh into `invalidate()` followed by `load()`, removing the redundant load-time force flag and flattening the coroutine body. Missing-artwork initials are now remembered per label inside the tile, avoiding repeated ICU segmentation during focus animation. Added `.DS_Store` to ignored local metadata and aligned the touched imports/callback formatting.
+
+Replaced the package-change test's external fixture/conditional skip with a launchable entry supplied by the test APK. The test disables and restores only that component with DONT_KILL_APP and releases its adopted shell permission afterward. It now always checks package-sequence refresh without depending on separately installed fixture apps. The forced-invalidation cancellation test now cancels a lazy refresh before execution, deterministically covering invalidation surviving a cancelled queued task. No tests were deleted or assertions relaxed. Release Manifest inspection confirms the test entry is absent.
+
+Final `ANDROID_SERIAL=emulator-5554 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease :app:connectedDebugAndroidTest --offline` passed: six JVM tests and 32 API 34 Android TV emulator tests, zero failures/errors/skips, Lint with no issues, and signed/shrunk Release built. `git diff --check`, source LF-ending checks, parsing all ten XML files, Gradle wrapper shell syntax, workflow YAML, and all six workflow Bash script syntax checks passed. Bundled MIT/OFL notices, original signer, Android minimum, version 1.0.4/code 8, ARM ABIs, and exclusion of the test entry were verified. Original font files remain unchanged. Reports and APK inspection are in `artifacts/review-20261108/`.
+
+Installed the published 1.0.4 APK and updated it in place with the reviewed Release on the emulator. Both installs succeeded; app ID, data directory, and first-install time remained identical, and the reviewed launcher opened successfully. Final APK SHA-256: `8b1c8d9d25b76b75e2a9a09ed224844eaaec856859ea444569c3c8fb8ec696a9`. The final Release is left installed. No commit or publication was performed.
+
+Scope remains emulator-only by user instruction. Physical remote/default-Home behavior, hardware scrolling, long-duration memory stability, damaged-artwork fault injection, and deterministic install/uninstall during discovery remain unverified. Tooling still emits Gradle deprecation, protobuf Unsafe, and signing-tool native-access warnings; these are separate from the clean Lint result. No additional production change was justified by this review.
+
+## 2026-11-08: 1.0.5 release preparation
+
+Updated versionName to 1.0.5 and versionCode to 9. `./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --offline` passed. The preceding final review passed all 32 Android TV emulator tests on the same application logic; device tests were not repeated for the version bump. Local Release APK SHA-256: `b0e372061df185dde43fd178be752372624727a1877d79b2aa1f192042d028e2`.

@@ -5,6 +5,7 @@ import android.graphics.drawable.BitmapDrawable
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import art.anjing.interlude.data.toArtwork
+import art.anjing.interlude.ui.firstDisplayCharacter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,5 +31,12 @@ class ArtworkTest {
                 } finally { source.recycle() }
             }
         }
+    }
+
+    @Test fun fallbackPreservesWholeUnicodeCharacters() {
+        for (first in listOf("A", "中", "𠮷", "😀", "e\u0301", "🇨🇳", "👩🏽‍💻")) {
+            assertEquals(first, (first + " App").firstDisplayCharacter())
+        }
+        assertEquals("", "".firstDisplayCharacter())
     }
 }

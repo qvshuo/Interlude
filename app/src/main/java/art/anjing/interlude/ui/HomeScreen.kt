@@ -1,5 +1,6 @@
 package art.anjing.interlude.ui
 
+import android.icu.text.BreakIterator
 import android.net.NetworkCapabilities
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.activity.compose.BackHandler
@@ -21,7 +22,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -119,12 +120,10 @@ internal fun HomeScreen(
             confirmPress.down = false
             confirmPress.consumed = false
         }
-        var lastAppFocus by rememberSaveable { mutableStateOf<String?>(null) }
         val focusedApp = displayed.firstOrNull { it.id == state.focusedId }
-            ?: displayed.firstOrNull { it.id == lastAppFocus } ?: displayed.firstOrNull()
+            ?: displayed.firstOrNull { it.id == state.lastAppFocusId } ?: displayed.firstOrNull()
         val glow by animateColorAsState(Color(focusedApp?.accentColor ?: 0xFF6486BE.toInt()), tween(650), label = "ambient")
         val owner = LocalLifecycleOwner.current
-        var initialFocusRequested by rememberSaveable { mutableStateOf(false) }
         var clock by remember { mutableStateOf(clockText()) }
         LaunchedEffect(owner) {
             owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -138,9 +137,7 @@ internal fun HomeScreen(
         // Explicit mutations take priority over incidental focus changes while lazy items move.
         LaunchedEffect(state.isLoaded, state.apps, displayed.map { it.id }, state.homeRequest, state.showHiddenApps, state.pendingFocusId) {
             if (!state.isLoaded) return@LaunchedEffect
-            val target = state.pendingFocusId
-                ?: (if (initialFocusRequested) state.focusedId else null)
-                ?: displayed.firstOrNull()?.id ?: "@settings"
+            val target = state.pendingFocusId ?: state.focusedId ?: return@LaunchedEffect
             when (target) {
                 "@inputs" -> inputs.requestFocus()
                 "@network" -> networkFocus.requestFocus()
@@ -149,14 +146,13 @@ internal fun HomeScreen(
                     val appIndex = displayed.indexOfFirst { it.id == target }
                     if (appIndex < 0) return@LaunchedEffect
                     val index = appIndex + if (state.showHiddenApps && appIndex >= visibleApps.size) 1 else 0
-                    if (state.pendingFocusId == null && (!initialFocusRequested || state.focusedId == null)) grid.scrollToItem(0)
+                    if (appIndex == 0 && state.pendingFocusId != null) grid.scrollToItem(0)
                     else if (grid.layoutInfo.visibleItemsInfo.none { it.index == index }) grid.scrollToItem(index)
                     withFrameNanos { }
                     requesters.getValue(target).requestFocus()
                 }
             }
             onFocus(target)
-            initialFocusRequested = true
         }
         LaunchedEffect(state.homeRequest) {
             confirmPress.down = false
@@ -230,7 +226,7 @@ internal fun HomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(18.dp),
                         verticalArrangement = Arrangement.spacedBy(18.dp),
                         modifier = Modifier.fillMaxWidth().weight(1f)
-                            .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+                            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                             .drawWithCache {
                                 // Cache the fixed mask; keep the focus inset clear for resting tiles.
                                 val fade = Brush.verticalGradient(
@@ -255,10 +251,7 @@ internal fun HomeScreen(
                                 val hidden = section == 1
                                 AppTile(app, Modifier.animateItem().focusRequester(requesters.getValue(app.id))
                                     .onFocusChanged {
-                                        if (it.isFocused) {
-                                            lastAppFocus = app.id
-                                            onFocus(app.id)
-                                        }
+                                        if (it.isFocused) onFocus(app.id)
                                     }
                                     .focusProperties {
                                         if (index < AppColumns && (!hidden || visibleApps.isEmpty())) up = inputs
@@ -314,7 +307,7 @@ private fun AppTile(
                     modifier = if (app.isBanner) Modifier.fillMaxSize() else Modifier.fillMaxSize().padding(12.dp),
                     contentScale = if (app.isBanner) ContentScale.Crop else ContentScale.Fit,
                     colorFilter = if (hidden) Grayscale else null)
-                else Text(app.label.take(1), color = Ink, fontSize = 36.sp, lineHeight = 44.sp)
+                else Text(remember(app.label) { app.label.firstDisplayCharacter() }, color = Ink, fontSize = 36.sp, lineHeight = 44.sp)
             }
         }
         Text(app.label, color = Ink.copy(alpha = 0.78f + 0.22f * emphasis.value), fontSize = 16.sp, maxLines = 1,
@@ -355,4 +348,11 @@ private fun FocusSurface(
     ) {
         Box(glass, content = content)
     }
+}
+
+// ICU character boundaries preserve surrogate pairs, combining marks, and emoji sequences.
+internal fun String.firstDisplayCharacter(): String {
+    if (isEmpty()) return ""
+    val iterator = BreakIterator.getCharacterInstance().apply { setText(this@firstDisplayCharacter) }
+    return substring(0, iterator.next())
 }
